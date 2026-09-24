@@ -104,7 +104,7 @@
             <mask id="pendulum-shadow">
                 <rect class="pole" x="-12.5" y="-55" width="5" height="65" style="fill: white; stroke: none" transform-origin="-10 10" />
                 <circle class="top-circle" cx="-10" cy="10" r="10" style="fill: white; stroke: none" />
-                <rect class="slider" x="-24" y="3" width="28" height="14" rx="5" style="fill: white; stroke: none" />
+                <rect class="slider" x="-26" y="-2.5" width="32" height="25" rx="5" style="fill: white; stroke: none" />
                 <rect x="-110" y="7.5" width="200" height="5" style="fill: white; stroke: none" />
             </mask>
             
@@ -127,7 +127,7 @@
             <line x1="-100" y1="1.7" x2="100" y2="1.7" style="stroke: rgba(0, 0, 0, 0.15); pointer-events: none;" />
             
             <mask id="slider-rail-shadow">
-                <polygon class="slider" points="-14,-2.5 -14,2.5 -19,2.5 -15.5,-2.5" style="fill: white; stroke: none" />
+                <polygon class="slider" points="-15,-2.5 -15,2.5 -20,2.5 -16.5,-2.5" style="fill: white; stroke: none" />
             </mask>
             
             <rect x="-100" y="-2.5" width="200" height="5" mask="url(#slider-rail-shadow)" style="fill: rgba(0, 0, 0, 0.2); stroke: none; pointer-events: none;" />
@@ -160,12 +160,33 @@
 
 
             <mask id="slider-pole-shadow-mask">
-                <rect class="slider" x="-16.5" y="-7.5" width="30" height="15" rx="5" style="fill: white; stroke: none" />
+                <rect class="slider" x="-18.5" y="-5" width="34.7" height="20" rx="5" style="fill: white; stroke: none" />
             </mask>
 
             <rect x="-100" y="-100" width="200" height="200" mask="url(#slider-pole-shadow-mask)" clip-path="url(#pole-shadow-clip)" style="fill: rgba(0, 0, 0, 0.15); stroke: none" />
-            <rect class="slider" x="-14" y="-7" width="28" height="14" rx="5" style="fill: url(#slider-gradient)" />
-            <rect class="slider" x="-12" y="-5.5" width="24" height="4" rx="2" style="fill: rgba(255, 255, 255, 0.16); stroke: none" />
+            <g class="slider">
+
+                <line x1="-11" y1="-7.5" x2="11" y2="7.5" style="stroke: black; stroke-width: 6; stroke-linecap: round" />
+                <line x1="-11" y1="7.5" x2="11" y2="-7.5" style="stroke: black; stroke-width: 6; stroke-linecap: round" />
+                <line x1="-11" y1="-7.5" x2="11" y2="7.5" style="stroke: url(#slider-gradient); stroke-width: 4.5; stroke-linecap: round" />
+                <line x1="-11" y1="7.5" x2="11" y2="-7.5" style="stroke: url(#slider-gradient); stroke-width: 4.5; stroke-linecap: round" />
+
+                <rect x="-15" y="-2.75" width="30" height="5.5" rx="2.75" style="fill: url(#slider-gradient); stroke: black" />
+                <rect x="-11" y="-1.75" width="9" height="1.75" rx="0.875" style="fill: rgba(255, 255, 255, 0.25); stroke: none" />
+
+                <circle cx="-11" cy="-7.5" r="5" style="fill: url(#slider-gradient); stroke: black" />
+                <circle cx="-11" cy="-7.5" r="2" style="fill: #b0e4fE; stroke: black" />
+                <circle cx="11" cy="-7.5" r="5" style="fill: url(#slider-gradient); stroke: black" />
+                <circle cx="11" cy="-7.5" r="2" style="fill: #b0e4fE; stroke: black" />
+                <circle cx="-11" cy="7.5" r="5" style="fill: url(#slider-gradient); stroke: black" />
+                <circle cx="-11" cy="7.5" r="2" style="fill: #b0e4fE; stroke: black" />
+                <circle cx="11" cy="7.5" r="5" style="fill: url(#slider-gradient); stroke: black" />
+                <circle cx="11" cy="7.5" r="2" style="fill: #b0e4fE; stroke: black" />
+
+                <circle cx="0" cy="0" r="4.5" style="fill: #b0e4fE; stroke: black" />
+                <circle cx="1.4" cy="-1.6" r="1.1" style="fill: rgba(255, 255, 255, 0.6); stroke: none" />
+
+            </g>
 
         </svg>
 
