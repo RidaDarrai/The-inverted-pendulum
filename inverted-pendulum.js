@@ -52,10 +52,12 @@ document.querySelectorAll( ".control-frame" ).forEach( frame => {
     frame.addEventListener( "pointercancel",   stopDragging );
 
 
-    const handle = frame.querySelector( ".resize-handle" );
+    const handle  = frame.querySelector( ".resize-handle" );
+    const content = frame.querySelector( ".frame-content" );
 
     let resizeOrigin = null;
     let startSize    = null;
+    let naturalSize  = null;
     let minSize      = null;
 
     handle.addEventListener( "pointerdown", evt => {
@@ -64,6 +66,7 @@ document.querySelectorAll( ".control-frame" ).forEach( frame => {
 
         resizeOrigin = { x: evt.clientX, y: evt.clientY };
         startSize    = { w: frame.offsetWidth, h: frame.offsetHeight };
+        naturalSize  = { w: content.offsetWidth, h: content.offsetHeight };
         minSize      = { w: parseFloat( getComputedStyle( frame ).minWidth  ) || 240,
                          h: parseFloat( getComputedStyle( frame ).minHeight ) || 80 };
 
@@ -88,9 +91,16 @@ document.querySelectorAll( ".control-frame" ).forEach( frame => {
 
         frame.style.width  = w + "px";
         frame.style.height = h + "px";
+
+        const contentScale = Math.min( frame.clientWidth  / naturalSize.w,
+                                       frame.clientHeight / naturalSize.h );
+
+        content.style.transform = `scale(${contentScale})`;
     });
 
     const stopResizing = () => {
+
+        if( resizeOrigin ) fitContainerToScreen();
 
         resizeOrigin = null;
         frame.classList.remove( "dragging" );

@@ -96,7 +96,6 @@ button:focus {
     background-color: rgba(255, 255, 255, 0.65);
     border: 0.25rem solid #DDECFB;
     border-radius: 1.5rem;
-    padding: 1.8rem 2rem;
     margin-bottom: 1.5rem;
     box-shadow: 0 0.4rem 1.2rem rgba(99, 135, 167, 0.15);
     position: relative;
@@ -104,8 +103,18 @@ button:focus {
     cursor: grab;
     transform: translate(0px, 0px);
     overflow: hidden;
-    min-width: 16rem;
+    min-width: 18rem;
     min-height: 5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.frame-content {
+    flex: 0 0 auto;
+    width: 36.5rem;
+    padding: 1.8rem 2rem;
+    transform-origin: center center;
 }
 
 .control-frame.dragging {
