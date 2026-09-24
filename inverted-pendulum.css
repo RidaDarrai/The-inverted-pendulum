@@ -283,3 +283,27 @@ input[type=range]::-moz-range-track {
     border-radius: 0.5rem;
     box-shadow: none;
 }
+
+svg {
+    justify-self: center;
+    grid-column: 1;
+    grid-row: 1;
+    width: 30rem;
+    height: 23rem;
+    overflow: visible;
+    pointer-events: none;
+}
+
+svg * {
+    fill: #eee;
+    stroke-width: 1;
+    stroke: black;
+}
+
+.top-circle {
+    transform: translateX( 0px ) translateY( -65px );
+}
+
+#drag-target {
+    pointer-events: auto;
+}
