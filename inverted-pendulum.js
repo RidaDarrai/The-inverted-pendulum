@@ -55,57 +55,60 @@ document.querySelectorAll( ".control-frame" ).forEach( frame => {
     const handle  = frame.querySelector( ".resize-handle" );
     const content = frame.querySelector( ".frame-content" );
 
-    let resizeOrigin = null;
-    let startSize    = null;
-    let naturalSize  = null;
-    let minSize      = null;
+    if( handle && content ) {
 
-    handle.addEventListener( "pointerdown", evt => {
+        let resizeOrigin = null;
+        let startSize    = null;
+        let naturalSize  = null;
+        let minSize      = null;
 
-        evt.preventDefault();
+        handle.addEventListener( "pointerdown", evt => {
 
-        resizeOrigin = { x: evt.clientX, y: evt.clientY };
-        startSize    = { w: frame.offsetWidth, h: frame.offsetHeight };
-        naturalSize  = { w: content.offsetWidth, h: content.offsetHeight };
-        minSize      = { w: parseFloat( getComputedStyle( frame ).minWidth  ) || 240,
-                         h: parseFloat( getComputedStyle( frame ).minHeight ) || 80 };
+            evt.preventDefault();
 
-        frame.style.width  = startSize.w + "px";
-        frame.style.height = startSize.h + "px";
+            resizeOrigin = { x: evt.clientX, y: evt.clientY };
+            startSize    = { w: frame.offsetWidth, h: frame.offsetHeight };
+            naturalSize  = { w: content.offsetWidth, h: content.offsetHeight };
+            minSize      = { w: parseFloat( getComputedStyle( frame ).minWidth  ) || 240,
+                             h: parseFloat( getComputedStyle( frame ).minHeight ) || 80 };
 
-        handle.setPointerCapture( evt.pointerId );
-        frame.classList.add( "dragging" );
-    });
+            frame.style.width  = startSize.w + "px";
+            frame.style.height = startSize.h + "px";
 
-    handle.addEventListener( "pointermove", evt => {
+            handle.setPointerCapture( evt.pointerId );
+            frame.classList.add( "dragging" );
+        });
 
-        if( !resizeOrigin ) return;
+        handle.addEventListener( "pointermove", evt => {
 
-        const maxSize = {
-            w: window.innerWidth  / containerScale - 48,
-            h: window.innerHeight / containerScale - 48
+            if( !resizeOrigin ) return;
+
+            const maxSize = {
+                w: window.innerWidth  / containerScale - 48,
+                h: window.innerHeight / containerScale - 48
+            };
+
+            const w = Math.min( maxSize.w, Math.max( minSize.w, startSize.w + ( evt.clientX - resizeOrigin.x ) / containerScale ) );
+            const h = Math.min( maxSize.h, Math.max( minSize.h, startSize.h + ( evt.clientY - resizeOrigin.y ) / containerScale ) );
+
+            frame.style.width  = w + "px";
+            frame.style.height = h + "px";
+
+            const contentScale = Math.min( frame.clientWidth  / naturalSize.w,
+                                           frame.clientHeight / naturalSize.h );
+
+            content.style.transform = `scale(${contentScale})`;
+        });
+
+        const stopResizing = () => {
+
+            if( resizeOrigin ) fitContainerToScreen();
+
+            resizeOrigin = null;
+            frame.classList.remove( "dragging" );
         };
 
-        const w = Math.min( maxSize.w, Math.max( minSize.w, startSize.w + ( evt.clientX - resizeOrigin.x ) / containerScale ) );
-        const h = Math.min( maxSize.h, Math.max( minSize.h, startSize.h + ( evt.clientY - resizeOrigin.y ) / containerScale ) );
-
-        frame.style.width  = w + "px";
-        frame.style.height = h + "px";
-
-        const contentScale = Math.min( frame.clientWidth  / naturalSize.w,
-                                       frame.clientHeight / naturalSize.h );
-
-        content.style.transform = `scale(${contentScale})`;
-    });
-
-    const stopResizing = () => {
-
-        if( resizeOrigin ) fitContainerToScreen();
-
-        resizeOrigin = null;
-        frame.classList.remove( "dragging" );
-    };
-
-    handle.addEventListener( "pointerup",       stopResizing );
-    handle.addEventListener( "pointercancel",   stopResizing );
+        handle.addEventListener( "pointerup",       stopResizing );
+        handle.addEventListener( "pointercancel",   stopResizing );
+    }
 });
