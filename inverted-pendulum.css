@@ -82,7 +82,6 @@ button:focus {
     grid-gap: 1rem;
     grid-template-columns: 12rem auto 7rem;
     align-items: center;
-    margin-bottom: 2rem;
 }
 
 #lower-sliders {
@@ -104,12 +103,41 @@ button:focus {
     z-index: 1;
     cursor: grab;
     transform: translate(0px, 0px);
+    overflow: hidden;
+    min-width: 16rem;
+    min-height: 5rem;
 }
 
 .control-frame.dragging {
     cursor: grabbing;
     z-index: 100;
     box-shadow: 0 1rem 2.5rem rgba(99, 135, 167, 0.3);
+}
+
+#buttons-frame {
+    min-width: 26rem;
+}
+
+.resize-handle {
+    position: absolute;
+    right: 3px;
+    bottom: 3px;
+    width: 1.6rem;
+    height: 1.6rem;
+    border-bottom-right-radius: 1.35rem;
+    cursor: nwse-resize;
+    touch-action: none;
+    z-index: 5;
+    opacity: 0.7;
+    background-image: repeating-linear-gradient(
+        -45deg,
+        #8CBCE5 0, #8CBCE5 2px,
+        transparent 2px, transparent 6px
+    );
+}
+
+.resize-handle:hover {
+    opacity: 1;
 }
 
 #lower-sliders .left,
