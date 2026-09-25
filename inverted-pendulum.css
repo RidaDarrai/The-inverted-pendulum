@@ -28,8 +28,10 @@ body {
     justify-self: center;
     align-self: center;
     width: 37rem;
+    grid-template-columns: 37rem;
     height: min-content;
     display: grid;
+    align-items: center;
     transform: scale(1);
 }
 
@@ -108,6 +110,7 @@ button:focus {
     display: flex;
     align-items: center;
     justify-content: center;
+    justify-self: center;
 }
 
 .frame-content {

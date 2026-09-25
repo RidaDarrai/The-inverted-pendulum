@@ -13,9 +13,32 @@ function fitContainerToScreen() {
     container.style.transform = `scale(${containerScale})`;
 }
 
+function freezePanelRows() {
+
+    const rows = Array.from( container.children )
+        .sort( ( a, b ) => a.offsetTop - b.offsetTop )
+        .map( el => {
+
+            const style  = getComputedStyle( el );
+            const margin = parseFloat( style.marginTop ) + parseFloat( style.marginBottom );
+
+            if( !el.classList.contains( "control-frame" ) )
+                return ( el.offsetHeight + margin ) + "px";
+
+            const content = el.querySelector( ".frame-content" );
+            const height  = ( content ? content.offsetHeight : el.offsetHeight )
+                          + ( el.offsetHeight - el.clientHeight );
+
+            return ( height + margin ) + "px";
+        });
+
+    container.style.gridTemplateRows = rows.join( " " );
+}
+
+freezePanelRows();
 fitContainerToScreen();
 window.addEventListener( "resize", fitContainerToScreen );
-document.fonts?.ready.then( fitContainerToScreen );
+document.fonts?.ready.then( () => { freezePanelRows(); fitContainerToScreen(); } );
 
 
 document.querySelectorAll( ".control-frame" ).forEach( frame => {
@@ -88,8 +111,8 @@ document.querySelectorAll( ".control-frame" ).forEach( frame => {
                 h: window.innerHeight / containerScale - 48
             };
 
-            const w = Math.min( maxSize.w, Math.max( minSize.w, startSize.w + ( evt.clientX - resizeOrigin.x ) / containerScale ) );
-            const h = Math.min( maxSize.h, Math.max( minSize.h, startSize.h + ( evt.clientY - resizeOrigin.y ) / containerScale ) );
+            const w = Math.min( maxSize.w, Math.max( minSize.w, startSize.w + 2 * ( evt.clientX - resizeOrigin.x ) / containerScale ) );
+            const h = Math.min( maxSize.h, Math.max( minSize.h, startSize.h + 2 * ( evt.clientY - resizeOrigin.y ) / containerScale ) );
 
             frame.style.width  = w + "px";
             frame.style.height = h + "px";
