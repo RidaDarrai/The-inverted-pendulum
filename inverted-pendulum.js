@@ -48,7 +48,7 @@ document.querySelectorAll( ".control-frame" ).forEach( frame => {
 
     frame.addEventListener( "pointerdown", evt => {
 
-        if( evt.target.closest( "input, button, a, .resize-handle" ) ) return;
+        if( evt.target.closest( "input, button, a, .resize-handle, #drag-target" ) ) return;
 
         dragOrigin = { px: evt.clientX, py: evt.clientY, ox: offset.x, oy: offset.y };
         frame.setPointerCapture( evt.pointerId );
@@ -179,6 +179,27 @@ function stateDot( state ) {
     let thetaddot = g/l * Math.sin(theta)
                   - xddot/l * Math.cos(theta);
 
+    // add dragging forces if there is a dragging pointer
+    if( pendulumDraggingPointer ) {
+
+        // direction vector of the pendulum pole
+        const poleDir = [ Math.sin(theta), Math.cos(theta) ];
+
+        // displacement vector to pendulum from mouse
+        const dist = [ pendulumDraggingPointerPos.x - x - l*Math.sin(theta),
+                       pendulumDraggingPointerPos.y     - l*Math.cos(theta) ];
+
+        // create a force on the pendulum
+        const springForce  = mul( dist, 600 );
+        const thetaddotInc = crossmod( springForce, poleDir ) / ( M * l );
+        const xddotInc     = dot( springForce, [1,0] ) / m - thetaddotInc * M*l/m * Math.cos(theta);
+
+        // superpose the accelerations from the spring force onto those from the equations of motion
+        // and add damping too
+        thetaddot += thetaddotInc - thetadot * 40;
+        xddot     += xddotInc     - xdot     * 40;
+    }
+
     // return stateDot vector
     return [thetadot, xdot, thetaddot, xddot];
 }
@@ -285,5 +306,234 @@ function reset() {
 }
 
 reset();
+
+
+// ---------- slider code ----------
+
+class Slider {
+
+    constructor( sliderId, pId = null, inputId = null ) {
+
+        // get the slider and throw an error if it wasn't found
+        this.slider = document.getElementById( sliderId );
+        if( !this.slider ) throw `Slider instatiated with invalid slider id: "${sliderId}"`;
+
+        // get the p and throw an error if it wasn't found
+        this.p = pId ? document.getElementById( pId ) : null;
+        if( pId && !this.p ) throw `Slider instatiated with invalid p id: "${pId}"`;
+
+        // get the input and throw an error if it wasn't found
+        this.input = inputId ? document.getElementById( inputId ) : null;
+        if( inputId && !this.input ) throw `Slider instatiated with invalid input id: "${inputId}"`;
+
+        // this._value is the current value of the slider
+        this._value = this.sliderValue;
+
+        // connect the callback to be called when the slider is changed
+        this.slider.addEventListener( "input", () => this.sliderChange() );
+
+        // if there's an input connect it to its callback
+        this.input?.addEventListener( "input", () => this.inputChange()  );
+
+        // decimal places of the slider
+        this.decimalPlaces = this.slider.step.split(".")[1]?.length || 0;
+
+        // method that can be overridden to change number formatting
+        this.format = x => x.toString();
+
+        // add an onchange callback that can be set by the user
+        this.onchange = () => {};
+    }
+
+    get sliderValue() {
+
+        return +this.slider.value;
+    }
+
+    set sliderValue( newValue ) {
+
+        this.slider.value = newValue;
+    }
+
+    sliderChange() {
+
+        // get the value from the slider
+        this._value = this.sliderValue;
+
+        // put the value into the p or input if they were supplied
+        if( this.p     ) this.p.innerHTML = this.format( this._value );
+        if( this.input ) this.input.value = this.format( this._value );
+
+        this.onchange();
+    }
+
+    inputChange() {
+
+        // get the value from the input
+        this._value = +this.input.value;
+
+        // put the value into the slider
+        this.sliderValue = this._value;
+
+        this.onchange();
+    }
+
+    get value() {
+
+        return this._value;
+    }
+
+    set value( newValue ) {
+
+        this._value = newValue;
+
+        // put the value into the slider
+        this.sliderValue = this._value;
+
+        // put the value into the p or input if they were supplied
+        if( this.p )
+            this.p.innerHTML = this.format( this._value );
+
+        if( this.input && this.input != document.activeElement )
+            this.input.value = this.format( this._value );
+    }
+}
+
+class LogSlider extends Slider {
+
+    constructor( sliderId, pId = null, numberId = null) {
+
+        super( sliderId, pId, numberId );
+
+        // cache the initial value of the slider
+        const initialValue = this.value;
+
+        // make the slider step small as log space is much smaller than actual space
+        this.slider.setAttribute( "step", "0.00000001" );
+
+        // map the slider to log space
+        this.slider.max = Math.log(this.slider.max);
+        this.slider.min = Math.log(this.slider.min);
+
+        // map the initial slider value into log space
+        this.slider.value = Math.log( initialValue );
+
+        this.format = x => x.toPrecision(3);
+    }
+
+    get sliderValue() {
+
+        return Math.exp( +this.slider.value );
+    }
+
+    set sliderValue( newValue ) {
+
+        this.slider.value = Math.log( newValue );
+    }
+}
+
+// ---------- end of slider code ----------
+
+// setup all the sliders
+const pthetaSlider         = new Slider(    "ptheta-slider"         , null, "ptheta-input"          );
+const dthetaSlider         = new Slider(    "dtheta-slider"         , null, "dtheta-input"          );
+const pxSlider             = new Slider(    "px-slider"             , null, "px-input"              );
+const dxSlider             = new Slider(    "dx-slider"             , null, "dx-input"              );
+const gravitySlider        = new Slider(    "g-slider"              , null, "g-input"               );
+const pendulumLengthSlider = new Slider(    "pendulum-length-slider", null, "pendulum-length-input" );
+const pendulumMassSlider   = new LogSlider( "pendulum-mass-slider"  , null, "pendulum-mass-input"   );
+const sliderMassSlider     = new LogSlider( "slider-mass-slider"    , null, "slider-mass-input"     );
+
+// link the sliders to change the sim variables
+const sliders = [ pthetaSlider, dthetaSlider, pxSlider, dxSlider,
+                  gravitySlider, pendulumLengthSlider, pendulumMassSlider, sliderMassSlider ];
+
+sliders.forEach( elm => elm.onchange = () =>
+                [ptheta, dtheta, px, dx, g, l, M, m] = sliders.map( elm => elm.value ) );
+
+
+// ---------- buttons code ----------
+
+function toggleController() {
+
+    controllerOn ^= 1;
+    controllerButton.innerHTML = `turn ${controllerOn ? "off" : "on"} controller`;
+}
+
+function nudge() {
+
+    // give an impulse to theta
+    const randomValue = ( Math.random() - 0.5 ) / 2;
+    thetadot += ( randomValue + Math.sign( randomValue ) ) / l ;
+}
+
+// get buttons
+const resetButton      = document.getElementById("reset");
+const controllerButton = document.getElementById("toggle-controller");
+const nudgeButton      = document.getElementById("nudge");
+
+// link buttons to callbacks
+resetButton.onpointerdown      = reset;
+controllerButton.onpointerdown = toggleController;
+nudgeButton.onpointerdown      = nudge;
+
+// ---------- end of buttons code ----------
+
+
+// ---------- pendulum dragging code ----------
+
+// 2 vars used to track the pendulum dragging
+let pendulumDraggingPointer    = null;
+let pendulumDraggingPointerPos = null;
+
+const background = document.querySelector( "#background" );
+const dragTarget = document.querySelector( "#drag-target" );
+const railRect   = document.querySelector( "#rail"       );
+
+// add event listeners
+dragTarget.addEventListener( "pointerdown" , pointerdownOnPendulum   );
+background.addEventListener( "pointermove" , pendulumDragPointermove );
+background.addEventListener( "pointerup"   , pointerupOnPendulum     );
+background.addEventListener( "pointerleave", pointerupOnPendulum     );
+
+function pointerdownOnPendulum( evt ) {
+
+    // store the pointer ID and position
+    pendulumDraggingPointer    = evt.pointerId;
+    pendulumDraggingPointerPos = pointerToPendulumSpace( evt );
+}
+
+function pointerupOnPendulum( evt ) {
+
+    // only act for the pointer being used
+    if( evt.pointerId != pendulumDraggingPointer ) return;
+
+    // unset all the pointer vars as the pointer has been released
+    pendulumDraggingPointer    = null;
+    pendulumDraggingPointerPos = null;
+}
+
+function pendulumDragPointermove( evt ) {
+
+    if( evt.pointerId != pendulumDraggingPointer ) return;
+
+    // update the pendulum dragging pointer pos
+    pendulumDraggingPointerPos = pointerToPendulumSpace( evt );
+}
+
+function pointerToPendulumSpace( evt ) {
+
+    // find pendulum origin in pendulum space
+    const railBBox = railRect.getBoundingClientRect();
+    const originX  = railBBox.left + railBBox.width  * 0.5;
+    const originY  = railBBox.top  + railBBox.height * 0.5;
+
+    // return the pointer position in pendulum space
+    return { x: (evt.clientX - originX) * 0.05 / railBBox.height,
+             y: (originY - evt.clientY) * 0.05 / railBBox.height };
+}
+
+// ---------- end of pendulum dragging code ----------
+
 
 mainloop( 0, 0 );
