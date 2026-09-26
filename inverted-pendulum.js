@@ -219,8 +219,9 @@ const catchThetadot = 0.6;   // max |thetadot| to hand over to the PD
 const catchXdot     = 2.0;   // max |xdot|, the cart must be calm to catch
 const catchX        = 0.4;   // max |x| to catch
 const parkThetadot  = 0.1;   // |thetadot| below this while hanging = parked
-const swingK        = 2;     // energy pump gain
+const swingK        = 15;    // energy pump gain
 const swingFmax     = 45;    // force clamp while swinging
+const swingDampX    = 0.5;   // cart velocity damping while swinging up
 const swingDamp     = 1.5;   // extra thetadot damping during swing down
 
 // pendulum energy relative to the hanging rest state
@@ -233,10 +234,12 @@ function pdForce() {
 }
 
 // energy shaping force: pumps the pendulum toward the upright energy M*g*l
+// smooth in the drive direction so the cart never chatters across the rail
 function swingUpForce() {
 
     const drive = thetadot * Math.cos(theta);
-    const u     = swingK * ( M*g*l - pendulumEnergy() ) * -Math.sign( drive );
+    const u     = -swingK * ( M*g*l - pendulumEnergy() ) * drive / Math.sqrt( drive*drive + 0.25 )
+                  - swingDampX * xdot;
 
     return Math.max( -swingFmax, Math.min( swingFmax, u ) );
 }
@@ -340,10 +343,11 @@ function updateCoordinates() {
     // avoid division by 0
     if( l == 0 ) return;
 
-    // handle bounce off edge of rail
-    const bounce = Math.abs(x) > 0.875 && xdot*x > 0;
-    thetadot    += 2*xdot*( Math.cos(theta)**2 ) / ( l*Math.cos(theta) ) * bounce;
-    xdot        += -2*xdot * bounce;
+    // wrap around the rail ends instead of bouncing: the cart reappears on
+    // the other side carrying its velocity through, so no impact energy is
+    // kicked into the pendulum
+    if( x >  0.875 ) x -= 1.75;
+    if( x < -0.875 ) x += 1.75;
 
     // get state vector
     const state = [theta, x, thetadot, xdot];
