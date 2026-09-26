@@ -206,13 +206,77 @@ const poleElements      = Array.from( document.querySelectorAll( ".pole"       )
 // true when the pid controller is active
 let controllerOn = false;
 
+// swing up / swing down mode state machine, updated once per frame
+//   "parked"   : controller off, or on but not acting
+//   "balance"  : PD controller holding the pendulum upright
+//   "swingUp"  : energy pump swinging the pendulum from hanging up to upright
+//   "swingDown": damped descent from upright back to hanging
+let swingMode = "parked";
+
+const AUTO_RECATCH  = true;  // go back to swinging up if balance is lost
+const balanceGate   = 0.5;   // |theta| beyond this the PD gives up
+const catchThetadot = 0.6;   // max |thetadot| to hand over to the PD
+const catchXdot     = 2.0;   // max |xdot|, the cart must be calm to catch
+const catchX        = 0.4;   // max |x| to catch
+const parkThetadot  = 0.1;   // |thetadot| below this while hanging = parked
+const swingK        = 2;     // energy pump gain
+const swingFmax     = 45;    // force clamp while swinging
+const swingDamp     = 1.5;   // extra thetadot damping during swing down
+
+// pendulum energy relative to the hanging rest state
+const pendulumEnergy = () => 0.5*M*( l*thetadot )**2 + M*g*l*Math.cos(theta);
+
+// pd controller
+function pdForce() {
+
+    return ptheta*theta + dtheta*thetadot + px*x + dx*xdot;
+}
+
+// energy shaping force: pumps the pendulum toward the upright energy M*g*l
+function swingUpForce() {
+
+    const drive = thetadot * Math.cos(theta);
+    const u     = swingK * ( M*g*l - pendulumEnergy() ) * -Math.sign( drive );
+
+    return Math.max( -swingFmax, Math.min( swingFmax, u ) );
+}
+
+// decide the current mode once per frame, never inside stateDot
+function updateControllerMode() {
+
+    if( !controllerOn ) { swingMode = "parked"; return; }
+
+    if( swingMode == "balance" && Math.abs(theta) > balanceGate )
+        swingMode = AUTO_RECATCH ? "swingUp" : "parked";
+
+    else if( swingMode == "swingUp" ) {
+
+        // nudge a perfectly still hanging pendulum so the pump can start
+        if( Math.abs(thetadot) < 0.05 && Math.cos(theta) < -0.95 ) thetadot = 0.5;
+
+        // hand over to the PD once upright, slow, and the cart is calm
+        if( Math.abs(theta)    < balanceGate
+         && Math.abs(thetadot) < catchThetadot
+         && Math.abs(xdot)     < catchXdot
+         && Math.abs(x)        < catchX )
+            swingMode = "balance";
+    }
+
+    else if( swingMode == "swingDown"
+          && Math.cos(theta) < -0.99 && Math.abs(thetadot) < parkThetadot )
+        swingMode = "parked";
+}
+
 // pd controller
 function controller() {
 
-    // don't even try if the angle is too far off upright
-    if( Math.abs(theta) > 0.5 ) return 0;
+    if( !controllerOn || swingMode == "parked" ) return 0;
 
-    return ( ptheta*theta + dtheta*thetadot + px*x + dx*xdot ) * controllerOn;
+    if( swingMode == "balance"   ) return pdForce();
+    if( swingMode == "swingUp"   ) return swingUpForce();
+    if( swingMode == "swingDown" ) return 0; // gravity and swingDamp do the work
+
+    return 0;
 }
 
 // vector operations
@@ -238,6 +302,9 @@ function stateDot( state ) {
     let thetaddot = g/l * Math.sin(theta)
                   - xddot/l * Math.cos(theta)
                   - f * thetadot;
+
+    // extra damping while swinging down for a controlled descent
+    if( swingMode == "swingDown" ) thetaddot -= swingDamp * thetadot;
 
     // add dragging forces if there is a dragging pointer
     if( pendulumDraggingPointer ) {
@@ -319,6 +386,9 @@ function mainloop( millis, lastMillis ) {
 
     dt = ( millis - lastMillis ) / 1000 / stepsPerFrame;
 
+    // update the controller mode once per frame, before the physics substeps
+    updateControllerMode();
+
     // do the physics step as many times as needed
     for( let s = 0; s < stepsPerFrame; ++s ) updateCoordinates();
 
@@ -363,6 +433,9 @@ function reset() {
     theta     = 0.001; // pendulum angle
     thetadot  = 0;     // pendulum angular velocity
     thetaddot = 0;     // pendulum acceleration
+
+    // start upright under the PD if the controller is on
+    swingMode = controllerOn ? "balance" : "parked";
 }
 
 reset();
@@ -520,6 +593,17 @@ function toggleController() {
 
     controllerOn ^= 1;
     controllerButton.innerHTML = `turn ${controllerOn ? "off" : "on"} controller`;
+
+    // show or hide the swing buttons and start from the right mode
+    document.body.classList.toggle( "controller-on", !!controllerOn );
+
+    if( controllerOn )
+        swingMode = Math.abs(theta) <= balanceGate ? "balance" : "parked";
+    else
+        swingMode = "parked";
+
+    freezePanelRows();
+    fitContainerToScreen();
 }
 
 function nudge() {
@@ -529,15 +613,35 @@ function nudge() {
     thetadot += ( randomValue + Math.sign( randomValue ) ) / l ;
 }
 
+function swingUp() {
+
+    if( !controllerOn ) return;
+    if( swingMode == "balance" || swingMode == "swingUp" ) return;
+
+    swingMode = "swingUp";
+}
+
+function swingDown() {
+
+    if( !controllerOn ) return;
+    if( swingMode == "swingDown" ) return;
+
+    swingMode = "swingDown";
+}
+
 // get buttons
 const resetButton      = document.getElementById("reset");
 const controllerButton = document.getElementById("toggle-controller");
 const nudgeButton      = document.getElementById("nudge");
+const swingUpButton    = document.getElementById("swing-up");
+const swingDownButton  = document.getElementById("swing-down");
 
 // link buttons to callbacks
 resetButton.onpointerdown      = reset;
 controllerButton.onpointerdown = toggleController;
 nudgeButton.onpointerdown      = nudge;
+swingUpButton.onpointerdown    = swingUp;
+swingDownButton.onpointerdown  = swingDown;
 
 // ---------- end of buttons code ----------
 

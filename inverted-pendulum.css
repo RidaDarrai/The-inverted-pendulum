@@ -53,6 +53,14 @@ body {
     white-space: nowrap;
 }
 
+.swing-button {
+    display: none;
+}
+
+body.controller-on .swing-button {
+    display: inline-block;
+}
+
 button {
     min-width: 6rem;
     font-size: 1.2rem;
@@ -160,6 +168,34 @@ button:focus {
 .resize-handle:hover {
     opacity: 1;
 }
+
+.border-resize {
+    position: absolute;
+    z-index: 4;
+    touch-action: none;
+}
+
+.border-resize[data-edge="left"],
+.border-resize[data-edge="right"] {
+    top: 0;
+    bottom: 0;
+    width: 0.5rem;
+    cursor: ew-resize;
+}
+
+.border-resize[data-edge="left"]  { left: 0; }
+.border-resize[data-edge="right"] { right: 0; }
+
+.border-resize[data-edge="top"],
+.border-resize[data-edge="bottom"] {
+    left: 0;
+    right: 0;
+    height: 0.5rem;
+    cursor: ns-resize;
+}
+
+.border-resize[data-edge="top"]    { top: 0; }
+.border-resize[data-edge="bottom"] { bottom: 0; }
 
 #lower-sliders .left,
 #upper-sliders .left {
