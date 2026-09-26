@@ -48,7 +48,7 @@ document.querySelectorAll( ".control-frame" ).forEach( frame => {
 
     frame.addEventListener( "pointerdown", evt => {
 
-        if( evt.target.closest( "input, button, a, .resize-handle, #drag-target" ) ) return;
+        if( evt.target.closest( "input, button, a, .resize-handle, .border-resize, #drag-target" ) ) return;
 
         dragOrigin = { px: evt.clientX, py: evt.clientY, ox: offset.x, oy: offset.y };
         frame.setPointerCapture( evt.pointerId );
@@ -137,6 +137,65 @@ document.querySelectorAll( ".control-frame" ).forEach( frame => {
 });
 
 
+// border resize: expand the frame itself (content keeps its scale), growing from the center outward
+document.querySelectorAll( ".border-resize" ).forEach( handle => {
+
+    const frame = handle.closest( ".control-frame" );
+    const edge  = handle.dataset.edge;
+
+    let origin    = null;
+    let startSize = null;
+    let minSize   = null;
+
+    handle.addEventListener( "pointerdown", evt => {
+
+        evt.preventDefault();
+
+        origin    = { x: evt.clientX, y: evt.clientY };
+        startSize = { w: frame.offsetWidth, h: frame.offsetHeight };
+        minSize   = { w: parseFloat( getComputedStyle( frame ).minWidth  ) || 240,
+                      h: parseFloat( getComputedStyle( frame ).minHeight ) || 80 };
+
+        handle.setPointerCapture( evt.pointerId );
+        frame.classList.add( "dragging" );
+    });
+
+    handle.addEventListener( "pointermove", evt => {
+
+        if( !origin ) return;
+
+        const maxSize = {
+            w: window.innerWidth  / containerScale - 48,
+            h: window.innerHeight / containerScale - 48
+        };
+
+        let w = startSize.w;
+        let h = startSize.h;
+
+        if( edge === "right" ) w = startSize.w + 2 * ( evt.clientX - origin.x ) / containerScale;
+        if( edge === "left"  ) w = startSize.w - 2 * ( evt.clientX - origin.x ) / containerScale;
+
+        if( edge === "bottom" ) h = startSize.h + 2 * ( evt.clientY - origin.y ) / containerScale;
+        if( edge === "top"    ) h = startSize.h - 2 * ( evt.clientY - origin.y ) / containerScale;
+
+        w = Math.min( maxSize.w, Math.max( minSize.w, w ) );
+        h = Math.min( maxSize.h, Math.max( minSize.h, h ) );
+
+        frame.style.width  = w + "px";
+        frame.style.height = h + "px";
+    });
+
+    const stopResizing = () => {
+
+        origin = null;
+        frame.classList.remove( "dragging" );
+    };
+
+    handle.addEventListener( "pointerup",       stopResizing );
+    handle.addEventListener( "pointercancel",   stopResizing );
+});
+
+
 // ---------- simulation code ----------
 
 // svg elements that get moved each frame
@@ -177,7 +236,8 @@ function stateDot( state ) {
                   - f * xdot + controller();
 
     let thetaddot = g/l * Math.sin(theta)
-                  - xddot/l * Math.cos(theta);
+                  - xddot/l * Math.cos(theta)
+                  - f * thetadot;
 
     // add dragging forces if there is a dragging pointer
     if( pendulumDraggingPointer ) {
@@ -282,7 +342,7 @@ let l  = 0.65;                  // pendulum length
 let dt = 0.016 / stepsPerFrame; // time step
 let M  = 1;                     // pendulum mass
 let m  = 1;                     // slider mass
-let f  = 0;                     // slider friction
+let f  = 0.5;                    // velocity damping (cart and pendulum)
 
 // pd controller variables
 let ptheta = 100;
@@ -443,13 +503,15 @@ const gravitySlider        = new Slider(    "g-slider"              , null, "g-i
 const pendulumLengthSlider = new Slider(    "pendulum-length-slider", null, "pendulum-length-input" );
 const pendulumMassSlider   = new LogSlider( "pendulum-mass-slider"  , null, "pendulum-mass-input"   );
 const sliderMassSlider     = new LogSlider( "slider-mass-slider"    , null, "slider-mass-input"     );
+const frictionSlider       = new Slider(    "friction-slider"       , null, "friction-input"        );
 
 // link the sliders to change the sim variables
 const sliders = [ pthetaSlider, dthetaSlider, pxSlider, dxSlider,
-                  gravitySlider, pendulumLengthSlider, pendulumMassSlider, sliderMassSlider ];
+                  gravitySlider, pendulumLengthSlider, pendulumMassSlider, sliderMassSlider,
+                  frictionSlider ];
 
 sliders.forEach( elm => elm.onchange = () =>
-                [ptheta, dtheta, px, dx, g, l, M, m] = sliders.map( elm => elm.value ) );
+                [ptheta, dtheta, px, dx, g, l, M, m, f] = sliders.map( elm => elm.value ) );
 
 
 // ---------- buttons code ----------
