@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Training artifacts — regenerate with backend/train.py
+checkpoints/
+runs/
+tensorboard/
+wandb/
+
+# Node (fixture scripts only — no package.json)
+node_modules/
+
+# Editors / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
