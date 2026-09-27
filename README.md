@@ -22,11 +22,11 @@ Open `inverted-pendulum.html`. That is the whole setup.
 
 ## How it was built
 
-1. **Layout first.** Before there was anything to simulate, I built the shell: panels on a page, each one draggable, resizable from corners and edges, with a fit-to-screen pass so nothing gets cut off on small windows, and content that scales with its panel. <sub>(`e0d9ce5` … `e402ea7`)</sub>
-2. **Then the scene.** An SVG drawing — rail, cart, pole, shadows. The cart went through a few redesigns (gradient body, four wheels, an X-frame) before it looked like something worth balancing. <sub>(`c86215a` … `0f54591`)</sub>
-3. **Then the physics.** The equations of motion as a state vector, integrated with RK4 and driven by a `requestAnimationFrame` loop — one commit, working simulation. <sub>(`1b80dbe`)</sub>
-4. **Then the interaction.** Sliders and inputs bound to the state, buttons for reset / controller / nudge, pointer dragging on the bob through a spring force, and friction on both the cart and the pendulum. <sub>(`2af6b4a`, `8ff54f6`)</sub>
-5. **Then the controller.** Swing-up started as a plain energy pump: push whenever the pendulum is short of the energy it needs to sit upright. Catching it was the fiddly part — gates on angle, angular velocity, cart speed, and cart position. I tuned it against a battery of start angles and friction levels until every case caught. The last pass was about rail travel: capping the deep-swing force, centering the cart, braking near the edges, and widening the track — 30 of 30 scenarios now catch with zero rail touches. Along the way I fixed a bug where the mass slider initialized through `exp()` and silently defaulted the mass to *e*. <sub>(`af70bc4` … `ee780cd`)</sub>
+**Layout first.** Before there was anything to simulate, I built the shell: panels on a page, each one draggable, resizable from corners and edges, with a fit-to-screen pass so nothing gets cut off on small windows, and content that scales with its panel. <sub>(`e0d9ce5` … `e402ea7`)</sub>
+**Then the scene.** An SVG drawing — rail, cart, pole, shadows. The cart went through a few redesigns (gradient body, four wheels, an X-frame) before it looked like something worth balancing. <sub>(`c86215a` … `0f54591`)</sub>
+**Then the physics.** The equations of motion as a state vector, integrated with RK4 and driven by a `requestAnimationFrame` loop — one commit, working simulation. <sub>(`1b80dbe`)</sub>
+**Then the interaction.** Sliders and inputs bound to the state, buttons for reset / controller / nudge, pointer dragging on the bob through a spring force, and friction on both the cart and the pendulum. <sub>(`2af6b4a`, `8ff54f6`)</sub>
+**Then the controller.** Swing-up started as a plain energy pump: push whenever the pendulum is short of the energy it needs to sit upright. Catching it was the fiddly part — gates on angle, angular velocity, cart speed, and cart position. I tuned it against a battery of start angles and friction levels until every case caught. The last pass was about rail travel: capping the deep-swing force, centering the cart, braking near the edges, and widening the track — 30 of 30 scenarios now catch with zero rail touches. Along the way I fixed a bug where the mass slider initialized through `exp()` and silently defaulted the mass to *e*. <sub>(`af70bc4` … `ee780cd`)</sub>
 
 ## How it works
 
