@@ -230,16 +230,39 @@ let controllerOn = false;
 //   "swingDown": damped descent from upright back to hanging
 let swingMode = "parked";
 
-const AUTO_RECATCH  = true;  // go back to swinging up if balance is lost
-const balanceGate   = 0.5;   // |theta| beyond this the PD gives up
-const catchThetadot = 0.6;   // max |thetadot| to hand over to the PD
-const catchXdot     = 2.0;   // max |xdot|, the cart must be calm to catch
-const catchX        = 0.4;   // max |x| to catch
-const parkThetadot  = 0.1;   // |thetadot| below this while hanging = parked
-const swingK        = 15;    // energy pump gain
-const swingFmax     = 45;    // force clamp while swinging
-const swingDampX    = 0.5;   // cart velocity damping while swinging up
-const swingDamp     = 1.5;   // extra thetadot damping during swing down
+const AUTO_RECATCH  = true;   // go back to swinging up if balance is lost
+const RAIL          = 1.3125; // half rail length: the cart wraps beyond this
+const railScale     = RAIL - 0.875; // offset used to scale the legacy thresholds
+const balanceGate   = 0.5;    // |theta| beyond this the PD gives up
+const catchThetadot = 1.0;    // max |thetadot| to hand over to the PD
+const catchXdot     = 2.0;    // max |xdot|, the cart must be calm to catch
+const catchX        = 0.4 + railScale;  // max |x| to catch
+const catchReturnX  = 0.7 + railScale;  // returning carts may be caught wider
+const parkThetadot  = 0.1;    // |thetadot| below this while hanging = parked
+const swingK        = 25;     // energy pump gain while under target energy
+const swingKOver    = 3;      // gain while over target energy: gentle bleed, no hunting
+const swingFmin     = 20;     // force clamp at low friction
+const swingFgrad    = 25;     // extra clamp per unit of friction above 0.5
+const swingFmax     = 45;     // force clamp ceiling while swinging
+const swingDeepF    = 8;      // force cap while the pendulum is far from upright
+const swingDeepTh   = 9;      // energy deficit above which the deep cap engages
+const swingDampX    = 0.5;    // cart velocity damping while swinging up
+const swingDampCoast= 2;      // extra cart damping once energy is banked (quiet catch)
+const swingDampLate = 1;      // late pump damping, low friction only
+const swingLateTh   = 4;      // energy deficit below which the late damping engages
+const swingLateDampF= 1.5;    // friction ceiling for the late damping
+const swingEdge     = 140;    // outward swing-up edge barrier strength
+const swingEdgeX    = 0.6 + railScale*0.5; // |x| where the swing-up edge zone starts
+const swingCenter   = 0.7;    // centering zone start while the pump is deep
+const swingCenterK  = 10;     // centering gain while the pump is deep
+const swingCenterKHi= 20;     // centering gain at high friction
+const swingCenterF  = 1.99;   // friction at which the centering gain doubles
+const brakeV        = 2;      // cart speed the pump brake tries to hold
+const brakeDE       = 3;      // energy deficit above which the brake is armed
+const brakeK        = 5;      // brake stiffness
+const swingEdgeBal  = 400;    // balance edge barrier strength (PD output is unclamped)
+const swingEdgeBalX = 0.7 + railScale*0.5; // balance barrier start
+const swingDamp     = 1.5;    // extra thetadot damping during swing down
 
 // pendulum energy relative to the hanging rest state
 const pendulumEnergy = () => 0.5*M*( l*thetadot )**2 + M*g*l*Math.cos(theta);
@@ -247,18 +270,71 @@ const pendulumEnergy = () => 0.5*M*( l*thetadot )**2 + M*g*l*Math.cos(theta);
 // pd controller
 function pdForce() {
 
-    return ptheta*theta + dtheta*thetadot + px*x + dx*xdot;
+    let u = ptheta*theta + dtheta*thetadot + px*x + dx*xdot;
+
+    // hard edge barrier: without it the PD pushes the cart outward at the rail
+    // and ping-pongs between the wrap points after a marginal catch
+    const ex = Math.abs(x) - swingEdgeBalX;
+    if( ex > 0 ) u -= swingEdgeBal * ex * Math.sign(x);
+
+    return u;
 }
 
 // energy shaping force: pumps the pendulum toward the upright energy M*g*l
 // smooth in the drive direction so the cart never chatters across the rail
 function swingUpForce() {
 
+    const Ev    = pendulumEnergy();
+    const dE    = M*g*l - Ev;
     const drive = thetadot * Math.cos(theta);
-    const u     = -swingK * ( M*g*l - pendulumEnergy() ) * drive / Math.sqrt( drive*drive + 0.25 )
+    const gain  = dE > 0 ? swingK : swingKOver;
+    let u       = -gain * dE * drive / Math.sqrt( drive*drive + 0.25 )
                   - swingDampX * xdot;
 
-    return Math.max( -swingFmax, Math.min( swingFmax, u ) );
+    // energy is banked: damp the cart so the catch gate can be met quietly
+    if( Ev >= 0.95 * M*g*l && Math.abs(theta) < 0.7 )
+        u -= swingDampCoast * xdot;
+
+    // late damping kills the last cart wobble before the catch (low friction only)
+    if( f <= swingLateDampF && dE < swingLateTh )
+        u -= swingDampLate * xdot;
+
+    // once the cart is past the edge zone and rolling out, never push it further out
+    if( Math.abs(x) > swingEdgeX && x*xdot > 0 && x*u > 0 )
+        u = 0;
+
+    // outward edge barrier: only fights outward strokes, the pump drives the return
+    const ex = Math.abs(x) - swingEdgeX;
+    if( ex > 0 && x*xdot > 0 )
+        u -= swingEdge * ex * Math.sign(x);
+
+    // friction adaptive clamp: light force is gentler on a free track,
+    // higher friction needs the full stroke to still bank energy in time
+    let F = Math.max( swingFmin, Math.min( swingFmax,
+               swingFmin + swingFgrad * Math.max(0, f - 0.5) ));
+
+    // deep cap: with the energy far below target, restrict force so the
+    // stroke stays short and the cart never reaches the rail ends
+    if( dE > swingDeepTh ) F = Math.min( F, swingDeepF );
+
+    u = Math.max( -F, Math.min( F, u ) );
+
+    // deep centering: while the deficit is large, pull a wide cart back home
+    if( dE > swingDeepTh ) {
+
+        const dc = Math.abs(x) - swingCenter;
+        const k  = f >= swingCenterF ? swingCenterKHi : swingCenterK;
+        if( dc > 0 ) u -= k * dc * Math.sign(x);
+    }
+
+    // pump brake: never accelerate past the cart speed limit (outward runs only)
+    if( dE > brakeDE && Math.abs(xdot) > brakeV && u*xdot > 0 ) {
+
+        const brake = -brakeK * ( Math.abs(xdot) - brakeV ) * Math.sign(xdot);
+        u = Math.max( -F, Math.min( u, brake ) );
+    }
+
+    return u;
 }
 
 // decide the current mode once per frame, never inside stateDot
@@ -274,11 +350,14 @@ function updateControllerMode() {
         // nudge a perfectly still hanging pendulum so the pump can start
         if( Math.abs(thetadot) < 0.05 && Math.cos(theta) < -0.95 ) thetadot = 0.5;
 
-        // hand over to the PD once upright, slow, and the cart is calm
+        // hand over to the PD once upright, slow, and the cart is calm;
+        // a cart returning to center (x*xdot < 0) is caught a little wider
+        // so the coast phase never runs the cart to the rail end
+        const returning = x*xdot < -0.05 && Math.abs(x) < catchReturnX;
         if( Math.abs(theta)    < balanceGate
          && Math.abs(thetadot) < catchThetadot
          && Math.abs(xdot)     < catchXdot
-         && Math.abs(x)        < catchX )
+         && (Math.abs(x) < catchX || returning) )
             swingMode = "balance";
     }
 
@@ -363,8 +442,8 @@ function updateCoordinates() {
     // wrap around the rail ends instead of bouncing: the cart reappears on
     // the other side carrying its velocity through, so no impact energy is
     // kicked into the pendulum
-    if( x >  0.875 ) x -= 1.75;
-    if( x < -0.875 ) x += 1.75;
+    if( x >  RAIL ) x -= 2*RAIL;
+    if( x < -RAIL ) x += 2*RAIL;
 
     // get state vector
     const state = [theta, x, thetadot, xdot];
@@ -559,8 +638,9 @@ class LogSlider extends Slider {
 
         super( sliderId, pId, numberId );
 
-        // cache the initial value of the slider
-        const initialValue = this.value;
+        // cache the initial LINEAR value of the slider: the HTML value is linear,
+        // but sliderValue already maps through exp, so read the raw attribute
+        const initialValue = +this.slider.value;
 
         // make the slider step small as log space is much smaller than actual space
         this.slider.setAttribute( "step", "0.00000001" );
@@ -571,6 +651,7 @@ class LogSlider extends Slider {
 
         // map the initial slider value into log space
         this.slider.value = Math.log( initialValue );
+        this._value = initialValue;
 
         this.format = x => x.toPrecision(3);
     }
@@ -638,6 +719,13 @@ function swingUp() {
 
     if( !controllerOn ) return;
     if( swingMode == "balance" || swingMode == "swingUp" ) return;
+
+    // preposition the cart toward the pump direction when starting from rest
+    if( swingMode == "parked" && Math.abs( Math.cos(theta) ) < 0.97 ) {
+
+        x    = ( Math.cos(theta) >= 0 ? 1 : -1 ) * 0.4 * RAIL;
+        xdot = 0;
+    }
 
     swingMode = "swingUp";
 }

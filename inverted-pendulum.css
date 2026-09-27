@@ -27,8 +27,8 @@ body {
 #container {
     justify-self: center;
     align-self: center;
-    width: 37rem;
-    grid-template-columns: 37rem;
+    width: 45rem;
+    grid-template-columns: 45rem;
     height: min-content;
     display: grid;
     align-items: center;
@@ -132,9 +132,14 @@ button:focus {
     grid-row: 2;
 }
 
+#scene-frame .frame-content {
+    width: 44rem;
+}
+
 .scene-content {
     display: grid;
-    padding-top: 7rem;
+    padding-top: 1rem;
+    padding-bottom: 4.5rem;
 }
 
 .control-frame.dragging {
@@ -336,8 +341,8 @@ svg {
     justify-self: center;
     grid-column: 1;
     grid-row: 1;
-    width: 30rem;
-    height: 23rem;
+    width: 100%;
+    height: 18rem;
     overflow: visible;
     pointer-events: none;
 }
