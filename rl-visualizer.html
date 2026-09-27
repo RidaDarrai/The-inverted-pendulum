@@ -1,0 +1,341 @@
+<!DOCTYPE HTML>
+
+<html>
+
+<head>
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Spartan:wght@500&display=swap" rel="stylesheet">
+    <link href="rl-visualizer.css" rel="stylesheet">
+</head>
+
+<body>
+
+<div id="background">
+
+    <div id="container">
+
+        <h1 id="title"> rl visualizer </h1>
+
+        <div id="badge-row">
+
+            <div class="control-frame badge" id="badge-status">
+
+                <div class="frame-content">
+                    <span class="badge-caption"> status </span>
+                    <div class="badge-values">
+                        <span class="badge-value" id="status-mode"> replay </span>
+                        <span class="badge-value" id="status-speed"> 1&times; </span>
+                    </div>
+                </div>
+
+                <div class="resize-handle"></div>
+
+            </div>
+
+            <div class="control-frame badge" id="badge-training">
+
+                <div class="frame-content">
+                    <span class="badge-caption"> training </span>
+                    <div class="badge-values">
+                        <span class="badge-value" id="training-gen"> gen 0 </span>
+                        <span class="badge-value" id="training-best"> best 0 </span>
+                    </div>
+                </div>
+
+                <div class="resize-handle"></div>
+
+            </div>
+
+            <div class="control-frame badge" id="badge-pop">
+
+                <div class="frame-content">
+                    <span class="badge-caption"> population </span>
+                    <div class="badge-values">
+                        <span class="badge-value" id="pop-alive"> 0 </span>
+                        <span class="badge-value" id="pop-mean"> 0 </span>
+                    </div>
+                </div>
+
+                <div class="resize-handle"></div>
+
+            </div>
+
+        </div>
+
+        <div class="control-frame" id="scene-frame">
+
+            <div class="frame-content scene-content">
+
+                <svg width="100" height="100" viewBox="-135 -40 270 50" id="stage-shadow" xmlns="http://www.w3.org/2000/svg" style="pointer-events: none">
+
+                    <mask id="pendulum-shadow">
+                        <rect class="pole" x="-12.5" y="-55" width="5" height="65" style="fill: white; stroke: none" transform-origin="-10 10" />
+                        <circle class="top-circle" cx="-10" cy="10" r="10" style="fill: white; stroke: none" />
+                        <rect class="slider" x="-23" y="4.75" width="26" height="10.5" rx="2.75" style="fill: white; stroke: none" />
+                        <circle class="slider" cx="-21" cy="2.5" r="5" style="fill: white; stroke: none" />
+                        <circle class="slider" cx="1" cy="2.5" r="5" style="fill: white; stroke: none" />
+                        <circle class="slider" cx="-21" cy="17.5" r="6.5" style="fill: white; stroke: none" />
+                        <circle class="slider" cx="1" cy="17.5" r="6.5" style="fill: white; stroke: none" />
+                        <rect class="rail" x="-141.25" y="7.5" width="282.5" height="5" style="fill: white; stroke: none" />
+                    </mask>
+
+                    <rect x="-300" y="-300" width="600" height="600" mask="url(#pendulum-shadow)" style="stroke: none; fill: rgba(0, 0, 0, 0.07)" />
+
+                </svg>
+
+                <svg width="100" height="100" viewBox="-135 -40 270 50" id="stage-svg" xmlns="http://www.w3.org/2000/svg">
+
+                    <defs>
+                        <linearGradient id="slider-gradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0" stop-color="#4d8ec9" />
+                            <stop offset="1" stop-color="#2d5f8a" />
+                        </linearGradient>
+                    </defs>
+
+                    <rect id="rail" x="-131.25" y="-2.5" width="262.5" height="5" />
+                    <line x1="-130.75" y1="-1.5" x2="130.75" y2="-1.5" style="stroke: white; pointer-events: none;" />
+                    <line x1="-131" y1="1.7" x2="131" y2="1.7" style="stroke: rgba(0, 0, 0, 0.15); pointer-events: none;" />
+
+                    <mask id="slider-rail-shadow">
+                        <polygon class="slider" points="-13,-2.5 -13,2.5 -18,2.5 -14.5,-2.5" style="fill: white; stroke: none" />
+                    </mask>
+
+                    <rect x="-131.25" y="-2.5" width="262.5" height="5" mask="url(#slider-rail-shadow)" style="fill: rgba(0, 0, 0, 0.2); stroke: none; pointer-events: none;" />
+
+
+                    <rect class="pole" x="-2.5" y="-65" width="5" height="65" />
+                    <line class="pole" x1="1" y1="-64" x2="1" y2="0" style="stroke: white" />
+                    <line class="pole" x1="-1.5" y1="-64" x2="-1.5" y2="0" style="stroke: rgba(0, 0, 0, 0.1);" />
+
+                    <clipPath id="pole-shadow-clip">
+                        <rect class="pole" x="-2.5" y="-70" width="5" height="70" style="fill: black;" />
+                    </clipPath>
+
+
+                    <mask id="top-circle-shadow">
+                        <circle cx="0" cy="0" r="10" style="stroke: none; fill: white;" />
+                        <circle cx="2" cy="-2" r="10" style="stroke: none; fill: black;" />
+                    </mask>
+
+                    <mask id="top-circle-pole-shadow-mask">
+                        <circle class="top-circle" cx="-1.5" cy="2.5" r="11" style="stroke: none; fill: white;" />
+                    </mask>
+
+                    <rect x="-200" y="-200" width="400" height="400" mask="url(#top-circle-pole-shadow-mask)" clip-path="url(#pole-shadow-clip)" style="fill: rgba(0, 0, 0, 0.15); stroke: none" />
+
+                    <circle class="top-circle" id="drag-target" cx="0" cy="0" r="20" style="fill: transparent; stroke: none;" />
+                    <circle class="top-circle" cx="0" cy="0" r="10" style="fill: #b0e4fE" />
+                    <circle class="top-circle" cx="4" cy="-4" r="1.7" style="fill: rgba(255, 255, 255, 0.6); stroke: none" />
+                    <circle class="top-circle" cx="0" cy="0" r="10.5" mask="url(#top-circle-shadow)" style="fill: rgba(0, 0, 0, 0.1)" />
+
+
+                    <mask id="slider-pole-shadow-mask">
+                        <rect class="slider" x="-18.5" y="-5" width="34.7" height="20" rx="5" style="fill: white; stroke: none" />
+                    </mask>
+
+                    <rect x="-200" y="-200" width="400" height="400" mask="url(#slider-pole-shadow-mask)" clip-path="url(#pole-shadow-clip)" style="fill: rgba(0, 0, 0, 0.15); stroke: none" />
+                    <g class="slider">
+
+                        <rect x="-13" y="-5.25" width="26" height="10.5" rx="2.75" style="fill: #2d5f8a; stroke: black" />
+                        <rect x="-11.5" y="-3.7" width="23" height="7.4" rx="1.5" style="fill: url(#slider-gradient); stroke: none" />
+
+                        <g transform="translate(-11, -7.5)">
+                            <circle r="5" style="fill: #2E3C56; stroke: black" />
+                            <circle r="3" style="fill: #42577D; stroke: none" />
+                            <circle r="1" style="fill: #111827; stroke: none" />
+                            <path d="M -3.1 -3.1 A 4.2 4.2 0 0 1 -0.6 -3.9" style="fill: none; stroke: white; stroke-width: 0.6; stroke-linecap: round" />
+                        </g>
+                        <g transform="translate(11, -7.5)">
+                            <circle r="5" style="fill: #2E3C56; stroke: black" />
+                            <circle r="3" style="fill: #42577D; stroke: none" />
+                            <circle r="1" style="fill: #111827; stroke: none" />
+                            <path d="M -3.1 -3.1 A 4.2 4.2 0 0 1 -0.6 -3.9" style="fill: none; stroke: white; stroke-width: 0.6; stroke-linecap: round" />
+                        </g>
+                        <g transform="translate(-11, 7.5)">
+                            <circle r="6.5" style="fill: #2E3C56; stroke: black" />
+                            <circle r="3.9" style="fill: #42577D; stroke: none" />
+                            <circle r="1.3" style="fill: #111827; stroke: none" />
+                            <path d="M -4.03 4.03 A 5.46 5.46 0 0 0 -0.78 5.07" style="fill: none; stroke: white; stroke-width: 0.6; stroke-linecap: round" />
+                        </g>
+                        <g transform="translate(11, 7.5)">
+                            <circle r="6.5" style="fill: #2E3C56; stroke: black" />
+                            <circle r="3.9" style="fill: #42577D; stroke: none" />
+                            <circle r="1.3" style="fill: #111827; stroke: none" />
+                            <path d="M -4.03 4.03 A 5.46 5.46 0 0 0 -0.78 5.07" style="fill: none; stroke: white; stroke-width: 0.6; stroke-linecap: round" />
+                        </g>
+
+                        <g transform="rotate(34.1)">
+                            <rect x="-15" y="-2.5" width="30" height="5" rx="1.25" style="fill: #788EA8; stroke: black" />
+                            <rect x="-14" y="-2.25" width="28" height="2" rx="1" style="fill: #92A9C4; stroke: none" />
+                            <circle cx="-12.5" r="1" style="fill: #1A2536; stroke: none" />
+                            <circle cx="12.5" r="1" style="fill: #1A2536; stroke: none" />
+                        </g>
+                        <g transform="rotate(-34.1)">
+                            <rect x="-15" y="-2.5" width="30" height="5" rx="1.25" style="fill: #788EA8; stroke: black" />
+                            <rect x="-14" y="-2.25" width="28" height="2" rx="1" style="fill: #92A9C4; stroke: none" />
+                            <circle cx="-12.5" r="1" style="fill: #1A2536; stroke: none" />
+                            <circle cx="12.5" r="1" style="fill: #1A2536; stroke: none" />
+                        </g>
+
+                        <circle r="4" style="fill: #A8D3FF; stroke: black" />
+                        <circle r="2" style="fill: #E0F2FE; stroke: none" />
+                        <circle r="0.8" style="fill: #DC2626; stroke: none" />
+
+                    </g>
+
+                </svg>
+
+                <svg width="100" height="100" viewBox="-135 0 270 16" id="ruler" xmlns="http://www.w3.org/2000/svg">
+
+                    <line class="ruler-base" x1="-130" y1="1" x2="130" y2="1" />
+
+                    <line class="ruler-tick" x1="-130"     y1="1" x2="-130"     y2="6" />
+                    <line class="ruler-tick" x1="-108.333" y1="1" x2="-108.333" y2="4" />
+                    <line class="ruler-tick" x1="-86.667"  y1="1" x2="-86.667"  y2="6" />
+                    <line class="ruler-tick" x1="-65"      y1="1" x2="-65"      y2="4" />
+                    <line class="ruler-tick" x1="-43.333"  y1="1" x2="-43.333"  y2="6" />
+                    <line class="ruler-tick" x1="-21.667"  y1="1" x2="-21.667"  y2="4" />
+                    <line class="ruler-tick" x1="0"        y1="1" x2="0"        y2="6" />
+                    <line class="ruler-tick" x1="21.667"   y1="1" x2="21.667"   y2="4" />
+                    <line class="ruler-tick" x1="43.333"   y1="1" x2="43.333"   y2="6" />
+                    <line class="ruler-tick" x1="65"       y1="1" x2="65"       y2="4" />
+                    <line class="ruler-tick" x1="86.667"   y1="1" x2="86.667"   y2="6" />
+                    <line class="ruler-tick" x1="108.333"  y1="1" x2="108.333"  y2="4" />
+                    <line class="ruler-tick" x1="130"      y1="1" x2="130"      y2="6" />
+
+                    <text x="-130" y="13"> -2.4 </text>
+                    <text x="-86.667" y="13"> -1.6 </text>
+                    <text x="-43.333" y="13"> -0.8 </text>
+                    <text x="0" y="13"> 0 </text>
+                    <text x="43.333" y="13"> 0.8 </text>
+                    <text x="86.667" y="13"> 1.6 </text>
+                    <text x="130" y="13"> 2.4 </text>
+
+                </svg>
+
+                <canvas id="ghost-canvas"></canvas>
+
+            </div>
+
+            <div class="border-resize" data-edge="left"></div>
+            <div class="border-resize" data-edge="right"></div>
+            <div class="border-resize" data-edge="top"></div>
+            <div class="border-resize" data-edge="bottom"></div>
+
+            <div class="resize-handle"></div>
+
+        </div>
+
+        <div class="control-frame" id="controls-frame">
+
+            <div class="frame-content">
+
+                <div id="controls">
+
+                    <div id="mode-toggle">
+                        <button type="button" class="mode-btn active" data-mode="replay"> replay </button>
+                        <button type="button" class="mode-btn" data-mode="live"> live </button>
+                    </div>
+
+                    <p class="left"> agents </p>
+                    <input id="agents-slider" class="middle" type="range" min="0" max="10" step="1" value="0">
+                    <input id="agents-input" class="right number" type="number" min="1" max="1000" step="1" value="1">
+
+                    <p class="left"> speed </p>
+                    <input id="speed-slider" class="middle" type="range" min="0" max="9" step="1" value="2">
+                    <p id="speed-label" class="right"> 1&times; </p>
+
+                    <p class="left"> episode </p>
+                    <select id="episode-select" class="middle">
+                        <option value="0"> episode 0 </option>
+                    </select>
+                    <p id="step-readout" class="right"> 0 / 0 </p>
+
+                    <input id="scrubber" class="wide" type="range" min="0" max="1000" step="1" value="0">
+
+                    <div id="control-buttons">
+                        <button type="button" id="play-pause"> play </button>
+                        <button type="button" id="rl-reset"> reset </button>
+                        <button type="button" id="stochastic-toggle"> stochastic </button>
+                        <button type="button" id="ghosts-toggle"> ghosts </button>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="resize-handle"></div>
+
+        </div>
+
+        <div class="control-frame" id="nn-frame">
+
+            <div class="frame-content">
+
+                <p class="panel-title"> policy network </p>
+                <div id="nn-container" class="panel-container"> </div>
+
+            </div>
+
+            <div class="border-resize" data-edge="left"></div>
+            <div class="border-resize" data-edge="right"></div>
+            <div class="border-resize" data-edge="top"></div>
+            <div class="border-resize" data-edge="bottom"></div>
+
+            <div class="resize-handle"></div>
+
+        </div>
+
+        <div class="control-frame" id="telemetry-frame">
+
+            <div class="frame-content">
+
+                <p class="panel-title"> telemetry </p>
+                <div id="telemetry-container" class="panel-container"> </div>
+
+            </div>
+
+            <div class="border-resize" data-edge="left"></div>
+            <div class="border-resize" data-edge="right"></div>
+            <div class="border-resize" data-edge="top"></div>
+            <div class="border-resize" data-edge="bottom"></div>
+
+            <div class="resize-handle"></div>
+
+        </div>
+
+        <div class="control-frame" id="score-frame">
+
+            <div class="frame-content">
+
+                <p class="panel-title"> score per generation </p>
+                <div id="score-container" class="panel-container"> </div>
+
+            </div>
+
+            <div class="border-resize" data-edge="left"></div>
+            <div class="border-resize" data-edge="right"></div>
+            <div class="border-resize" data-edge="top"></div>
+            <div class="border-resize" data-edge="bottom"></div>
+
+            <div class="resize-handle"></div>
+
+        </div>
+
+    </div>
+</div>
+
+<script type="text/javascript" src="js/vendor/d3.min.js"> </script>
+<script type="text/javascript" src="js/panels.js"> </script>
+<script type="text/javascript" src="js/cartpole.js"> </script>
+<script type="text/javascript" src="js/policy.js"> </script>
+<script type="text/javascript" src="js/stage.js"> </script>
+<script type="text/javascript" src="js/nn-viz.js"> </script>
+<script type="text/javascript" src="js/charts.js"> </script>
+<script type="text/javascript" src="js/sources.js"> </script>
+<script type="text/javascript" src="js/player.js"> </script>
+<script type="text/javascript" src="js/ws.js"> </script>
+<script type="text/javascript" src="js/app.js"> </script>
+
+</body>
+</html>

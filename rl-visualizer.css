@@ -1,0 +1,502 @@
+* {
+    margin: 0;
+    padding: 0;
+    font-family: 'Spartan', sans-serif;
+    user-select: none;
+    box-sizing: border-box;
+    touch-action: none;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+}
+
+body {
+    display: grid;
+}
+
+#background {
+    display: grid;
+    background-color: AliceBlue;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    justify-self: center;
+    align-self: center;
+    justify-content: center;
+    align-content: center;
+}
+
+#container {
+    justify-self: center;
+    align-self: center;
+    width: 45rem;
+    grid-template-columns: 45rem;
+    height: min-content;
+    display: grid;
+    align-items: center;
+    transform: scale(1);
+}
+
+#title {
+    grid-row: 1;
+    grid-column: 1;
+    justify-self: center;
+    font-size: 3.5rem;
+    white-space: nowrap;
+    color: #8CBCE5;
+}
+
+p {
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: #8CBCE5;
+    text-align: justify;
+    line-height: 1.32;
+}
+
+a {
+    text-decoration: none;
+    opacity: 0.6;
+}
+
+button {
+    min-width: 6rem;
+    font-size: 1.2rem;
+    color: white;
+    background-color: #8CBCE5;
+    padding: 0.8rem;
+    border-radius: 0.7rem;
+    cursor: pointer;
+    border: 0.25rem solid #8CBCE5;
+}
+
+button:hover {
+    border: 0.25rem solid #7ea9ce;
+}
+
+button:active {
+    background: #6387A7;
+}
+
+button:focus {
+    outline: none;
+    border: 0.25rem solid #6387A7;
+}
+
+
+/* ---------- badges ---------- */
+
+#badge-row {
+    grid-column: 1;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.control-frame.badge {
+    min-width: 10rem;
+    min-height: 3.4rem;
+    margin-bottom: 0;
+}
+
+.badge .frame-content {
+    width: auto;
+    padding: 0.6rem 1.2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+    white-space: nowrap;
+}
+
+.badge-values {
+    display: flex;
+    align-items: baseline;
+    gap: 0.9rem;
+}
+
+.control-frame.badge .resize-handle {
+    width: 1.2rem;
+    height: 1.2rem;
+    border-bottom-right-radius: 1rem;
+}
+
+.badge-caption {
+    font-size: 0.8rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: #8CBCE5;
+}
+
+.badge-value {
+    font-size: 1.6rem;
+    font-weight: bold;
+    color: #6387A7;
+}
+
+
+/* ---------- frames ---------- */
+
+.control-frame {
+    background-color: rgba(255, 255, 255, 0.65);
+    border: 0.25rem solid #DDECFB;
+    border-radius: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 0.4rem 1.2rem rgba(99, 135, 167, 0.15);
+    position: relative;
+    z-index: 1;
+    cursor: grab;
+    transform: translate(0px, 0px);
+    overflow: hidden;
+    min-width: 18rem;
+    min-height: 5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    justify-self: center;
+}
+
+.frame-content {
+    flex: 0 0 auto;
+    width: 36.5rem;
+    padding: 1.8rem 2rem;
+    transform-origin: center center;
+}
+
+.control-frame.dragging {
+    cursor: grabbing;
+    z-index: 100;
+    box-shadow: 0 1rem 2.5rem rgba(99, 135, 167, 0.3);
+}
+
+.resize-handle {
+    position: absolute;
+    right: 3px;
+    bottom: 3px;
+    width: 1.6rem;
+    height: 1.6rem;
+    border-bottom-right-radius: 1.35rem;
+    cursor: nwse-resize;
+    touch-action: none;
+    z-index: 5;
+    opacity: 0.7;
+    background-image: repeating-linear-gradient(
+        -45deg,
+        #8CBCE5 0, #8CBCE5 2px,
+        transparent 2px, transparent 6px
+    );
+}
+
+.resize-handle:hover {
+    opacity: 1;
+}
+
+.border-resize {
+    position: absolute;
+    z-index: 4;
+    touch-action: none;
+}
+
+.border-resize[data-edge="left"],
+.border-resize[data-edge="right"] {
+    top: 0;
+    bottom: 0;
+    width: 0.5rem;
+    cursor: ew-resize;
+}
+
+.border-resize[data-edge="left"]  { left: 0; }
+.border-resize[data-edge="right"] { right: 0; }
+
+.border-resize[data-edge="top"],
+.border-resize[data-edge="bottom"] {
+    left: 0;
+    right: 0;
+    height: 0.5rem;
+    cursor: ns-resize;
+}
+
+.border-resize[data-edge="top"]    { top: 0; }
+.border-resize[data-edge="bottom"] { bottom: 0; }
+
+
+/* ---------- scene frame ---------- */
+
+#scene-frame {
+    grid-column: 1;
+}
+
+#scene-frame .frame-content {
+    width: 44rem;
+}
+
+.scene-content {
+    display: grid;
+    position: relative;
+    padding-top: 1rem;
+    padding-bottom: 1.5rem;
+}
+
+#ghost-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+svg {
+    justify-self: center;
+    width: 100%;
+    overflow: visible;
+    pointer-events: none;
+}
+
+svg * {
+    fill: #eee;
+    stroke-width: 1;
+    stroke: black;
+}
+
+#stage-shadow,
+#stage-svg {
+    grid-column: 1;
+    grid-row: 1;
+    height: 18rem;
+}
+
+#ruler {
+    grid-column: 1;
+    grid-row: 2;
+    height: 3rem;
+}
+
+#ruler line {
+    fill: none;
+    stroke: rgba(99, 135, 167, 0.45);
+    stroke-width: 1;
+}
+
+#ruler .ruler-base {
+    stroke: rgba(99, 135, 167, 0.35);
+}
+
+#ruler text {
+    fill: #6387A7;
+    stroke: none;
+    font-size: 6.5px;
+    font-weight: bold;
+    text-anchor: middle;
+}
+
+.top-circle {
+    transform: translateX( 0px ) translateY( -65px );
+}
+
+#drag-target {
+    pointer-events: auto;
+}
+
+
+/* ---------- controls frame ---------- */
+
+#controls-frame {
+    grid-column: 1;
+    min-width: 30rem;
+}
+
+#controls {
+    width: 100%;
+    display: grid;
+    grid-gap: 1rem;
+    grid-template-columns: 12rem auto 7rem;
+    align-items: center;
+}
+
+#controls .left {
+    grid-column: 1;
+}
+
+#controls .middle {
+    grid-column: 2;
+    min-width: 1rem;
+}
+
+#controls .right {
+    grid-column: 3;
+}
+
+#controls .wide {
+    grid-column: 1 / -1;
+}
+
+#mode-toggle {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.mode-btn.active {
+    background-color: #6387A7;
+    border: 0.25rem solid #6387A7;
+}
+
+#speed-label,
+#step-readout {
+    font-size: 1rem;
+    color: #6387A7;
+    text-align: right;
+    white-space: nowrap;
+}
+
+#control-buttons {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
+}
+
+#episode-select {
+    font-size: 1rem;
+    font-family: 'Spartan', sans-serif;
+    padding: 0.8rem 0.7rem 0.6rem 0.7rem;
+    border-radius: 0.5rem;
+    text-align: left;
+    background-color: #DDECFB;
+    border: 0.25rem solid #DDECFB;
+    color: #6387A7;
+    cursor: pointer;
+}
+
+#episode-select:hover {
+    border: 0.25rem solid #C9DFF4;
+}
+
+#episode-select:focus {
+    outline: none;
+    border: 0.25rem solid #8AB1D6;
+}
+
+input[type="number"] {
+    font-size: 1rem;
+    padding: 0.8rem 0.7rem 0.6rem 0.7rem;
+    border-radius: 0.5rem;
+    text-align: left;
+    background-color: #DDECFB;
+    border: 0.25rem solid #DDECFB;
+    color: #6387A7;
+}
+
+input[type="number"]:hover {
+    border: 0.25rem solid #C9DFF4;
+}
+
+input[type="number"]:focus {
+    outline: none;
+    border: 0.25rem solid #8AB1D6;
+}
+
+input[type=range] {
+    -webkit-appearance: none; /* Hides the slider so that custom slider can be made */
+    width: 100%; /* Specific width is required for Firefox. */
+    background: transparent; /* Otherwise white in Chrome */
+    height: 1.5rem;
+    box-shadow: none;
+}
+
+input[type=range]:focus {
+    outline: none;
+}
+
+input[type=range]::-ms-track {
+    width: 100%;
+    cursor: pointer;
+
+    /* Hides the slider so custom styles can be added */
+    background: transparent;
+    border-color: transparent;
+    color: transparent;
+}
+
+/* Special styling for WebKit/Blink */
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 1.7rem;
+    width: 1.7rem;
+    border-radius: 0.5rem;
+    background-color: #8CBCE5;
+    cursor: pointer;
+    margin-top: -0.6rem; /* You need to specify a margin in Chrome, but in Firefox and IE it is automatic */
+}
+
+input[type=range]:hover::-webkit-slider-thumb {
+    border: 0.25rem solid rgba(0, 0, 0, 0.1);
+}
+
+input[type=range]:focus::-webkit-slider-thumb {
+    border: 0.25rem solid #6387A7;
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 0.5rem;
+    cursor: pointer;
+    background-color: #DDECFB;
+    border-radius: 0.5rem;
+}
+
+/* All the same stuff for Firefox */
+input[type=range]::-moz-range-thumb {
+    height: 1.2rem;
+    width: 1.2rem;
+    border-radius: 0.5rem;
+    background-color: #8CBCE5;
+    cursor: pointer;
+    border: 0.25rem solid #8CBCE5;
+    box-shadow: none;
+}
+
+input[type=range]:hover::-moz-range-thumb {
+    border: 0.25rem solid rgba(0, 0, 0, 0.1);
+}
+
+input[type=range]:focus::-moz-range-thumb {
+    border: 0.25rem solid #6387A7;
+}
+
+input[type=range]::-moz-range-track {
+    width: 100%;
+    height: 0.5rem;
+    cursor: pointer;
+    background-color: #DDECFB;
+    border-radius: 0.5rem;
+    box-shadow: none;
+}
+
+
+/* ---------- chart frames ---------- */
+
+#nn-frame,
+#telemetry-frame,
+#score-frame {
+    grid-column: 1;
+}
+
+.panel-title {
+    font-size: 1.4rem;
+    color: #8CBCE5;
+    text-align: left;
+    border-bottom: 0.15rem solid #DDECFB;
+    padding-bottom: 0.6rem;
+    margin-bottom: 1rem;
+}
+
+.panel-container {
+    width: 100%;
+    min-height: 12rem;
+}
