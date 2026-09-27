@@ -37,7 +37,7 @@ Everything else is a new file. Never edit files owned by another task (§9).
 `rl-visualizer.html`: same `<head>` as `inverted-pendulum.html` + `rl-visualizer.css`
 + scripts in order: `js/vendor/d3.min.js`, `js/panels.js`, `js/cartpole.js`,
 `js/policy.js`, `js/stage.js`, `js/nn-viz.js`, `js/charts.js`, `js/sources.js`,
-`js/player.js`, `js/app.js`
+`js/player.js`, `js/ws.js`, `js/app.js`
 
 DOM ids later tasks wire:
 
@@ -145,6 +145,10 @@ if (typeof module !== "undefined") module.exports = { <name> };
 - `RL.player` — `init()`, `setMode('replay'|'live')`, `setAgents(n)`,
   `setSpeed(presetIndex)`, `play()`, `pause()`, `reset()`, `seek(frac)`,
   `onBatch(cb)`
+- `RL.ws` (owner T9) — connects to backend if served; on change dispatches
+  `window` CustomEvents `rl:metrics` (training_metrics.json shape) and
+  `rl:policy` (policy.json shape). Offline → silent no-op (static JSON path).
+  T7's `app.js` subscribes to both from the start.
 
 ```js
 SPEED_PRESETS = [0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, "MAX"]  // steps/s = 50 × mult
@@ -184,5 +188,5 @@ AGENT_PRESETS = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1000]
 | `js/player.js`, `js/sources.js`, `dev/player-preview.html` | T6 |
 | `js/app.js`, css touch-ups, html hook fixes | T7 |
 | `backend/` (pyproject, train, export, record) | T8 |
-| `backend/server.py` + WS protocol | T9 |
+| `backend/server.py`, `js/ws.js` + WS protocol | T9 |
 | `README.md`, final end-to-end verification | T10 |
