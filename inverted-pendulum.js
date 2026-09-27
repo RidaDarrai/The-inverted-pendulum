@@ -143,18 +143,24 @@ document.querySelectorAll( ".border-resize" ).forEach( handle => {
     const frame = handle.closest( ".control-frame" );
     const edge  = handle.dataset.edge;
 
-    let origin    = null;
-    let startSize = null;
-    let minSize   = null;
+    let origin      = null;
+    let startSize   = null;
+    let minSize     = null;
+    let startMargin = null;
+    let shiftResize = false;
+
+    const marginSide = { right: "marginLeft", left: "marginRight", bottom: "marginTop", top: "marginBottom" };
 
     handle.addEventListener( "pointerdown", evt => {
 
         evt.preventDefault();
 
-        origin    = { x: evt.clientX, y: evt.clientY };
-        startSize = { w: frame.offsetWidth, h: frame.offsetHeight };
-        minSize   = { w: parseFloat( getComputedStyle( frame ).minWidth  ) || 240,
-                      h: parseFloat( getComputedStyle( frame ).minHeight ) || 80 };
+        origin      = { x: evt.clientX, y: evt.clientY };
+        startSize   = { w: frame.offsetWidth, h: frame.offsetHeight };
+        minSize     = { w: parseFloat( getComputedStyle( frame ).minWidth  ) || 240,
+                        h: parseFloat( getComputedStyle( frame ).minHeight ) || 80 };
+        shiftResize = evt.shiftKey;
+        startMargin = shiftResize ? parseFloat( getComputedStyle( frame )[ marginSide[edge] ] ) || 0 : 0;
 
         handle.setPointerCapture( evt.pointerId );
         frame.classList.add( "dragging" );
@@ -169,20 +175,31 @@ document.querySelectorAll( ".border-resize" ).forEach( handle => {
             h: window.innerHeight / containerScale - 48
         };
 
+        // with shift only the dragged edge moves, otherwise the frame scales from its center
+        const factor = shiftResize ? 1 : 2;
+
         let w = startSize.w;
         let h = startSize.h;
 
-        if( edge === "right" ) w = startSize.w + 2 * ( evt.clientX - origin.x ) / containerScale;
-        if( edge === "left"  ) w = startSize.w - 2 * ( evt.clientX - origin.x ) / containerScale;
-
-        if( edge === "bottom" ) h = startSize.h + 2 * ( evt.clientY - origin.y ) / containerScale;
-        if( edge === "top"    ) h = startSize.h - 2 * ( evt.clientY - origin.y ) / containerScale;
+        if( edge === "right"  ) w = startSize.w + factor * ( evt.clientX - origin.x ) / containerScale;
+        if( edge === "left"   ) w = startSize.w - factor * ( evt.clientX - origin.x ) / containerScale;
+        if( edge === "bottom" ) h = startSize.h + factor * ( evt.clientY - origin.y ) / containerScale;
+        if( edge === "top"    ) h = startSize.h - factor * ( evt.clientY - origin.y ) / containerScale;
 
         w = Math.min( maxSize.w, Math.max( minSize.w, w ) );
         h = Math.min( maxSize.h, Math.max( minSize.h, h ) );
 
         frame.style.width  = w + "px";
         frame.style.height = h + "px";
+
+        // in shift mode push against the opposite border so only the dragged edge moves
+        if( shiftResize ) {
+
+            const dw = w - startSize.w;
+            const dh = h - startSize.h;
+
+            frame.style[ marginSide[edge] ] = ( startMargin + ( edge === "left" || edge === "right" ? dw : dh ) ) + "px";
+        }
     });
 
     const stopResizing = () => {
