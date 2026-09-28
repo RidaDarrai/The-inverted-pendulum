@@ -20,6 +20,64 @@ A cart-pole simulation that runs in the browser: a pendulum on a cart riding a r
 
 Open `inverted-pendulum.html`. That is the whole setup.
 
+## RL Visualizer
+
+`rl-visualizer.html` is the project's second page: a dashboard for the reinforcement-learning side of the same CartPole. It plays back recorded episodes of a trained PPO policy, runs that policy live against a JavaScript port of the environment (up to 1000 agents), and — when the backend is up — streams training progress into the page as it happens. The pendulum page links to it from the footer, and back again.
+
+### Serving it
+
+Two ways, same files:
+
+- **Static** — serve the repo root and open the page:
+  ```
+  python -m http.server 8000
+  ```
+  then <http://127.0.0.1:8000/rl-visualizer.html>. `data/*.json` are read as plain files — no backend, no live updates. Opening the file directly (`file://`) also runs the page, minus those JSON fetches (browsers block them).
+- **With the backend** — a FastAPI host that serves the visualizer at `/`, answers `/api/health`, and pushes a WebSocket stream of `rl:metrics` / `rl:policy` events whenever `data/training_metrics.json` or `data/policy.json` change on disk:
+  ```
+  cd backend
+  uv sync
+  uv run uvicorn server:app --port 8000
+  ```
+  then open <http://127.0.0.1:8000/>.
+
+### Training and recording
+
+```
+cd backend
+uv sync                  # first time: installs fastapi, uvicorn, sb3, torch
+uv run python train.py   # PPO, eval every 10k steps → data/training_metrics.json + data/policy.json (+ checkpoints/)
+uv run python record.py  # best checkpoint rollout → data/episodes.json (per-step obs, actions, probs, activations)
+```
+
+Leave `uvicorn` running while training — the badges and the network diagram follow each evaluation. Reserved for later: `set_agents` / `start` / `stop` control messages over the WebSocket; the server currently answers them with `not_implemented`.
+
+### Controls
+
+| control | what it does |
+| --- | --- |
+| `replay` / `live` | recorded episode playback vs the trained policy stepping the JS CartPole port |
+| agents (`1` … `1000`) | population size in live mode — slider snaps to presets, number input accepts anything |
+| speed (`0.25×` … `64×`, `MAX`) | step rate; `MAX` unrolls as fast as it can and the badge shows measured steps/s |
+| `play` / `pause`, `reset` | transport |
+| episode select + scrubber | pick a recorded episode and seek (replay only) |
+| stochastic | sample actions from the policy's probabilities instead of taking the argmax |
+| ghost trails | fading trails behind live agents |
+
+### How it fits together
+
+```
+backend/train.py ─┐
+backend/record.py ┤→ data/*.json ─→ js/ws.js (live push) or static fetch
+                  │                    └→ js/app.js (controls, badges, data flow)
+                  │                         └→ js/player.js (replay/live switching, transport)
+                  │                              ├→ js/sources.js (recorded episodes / local simulation)
+                  │                              │     └→ js/cartpole.js (env) + js/policy.js (policy forward)
+                  │                              └→ js/stage.js · js/nn-viz.js · js/charts.js
+```
+
+`rl-contract.md` is the engineering contract for all of it: data schemas, module APIs (`window.RL.*`), design rules, and the ownership map.
+
 ## How it was built
 
 **Layout first.** Before there was anything to simulate, I built the shell: panels on a page, each one draggable, resizable from corners and edges, with a fit-to-screen pass so nothing gets cut off on small windows, and content that scales with its panel. <sub>(`e0d9ce5` … `e402ea7`)</sub>
@@ -73,6 +131,11 @@ More of the interface in motion:
 - `inverted-pendulum.html` — page structure and the scene markup
 - `inverted-pendulum.css` — layout, panels, and styling
 - `inverted-pendulum.js` — physics, controller, and interaction
+- `rl-visualizer.html` / `rl-visualizer.css` — the dashboard page and its styling
+- `js/` — dashboard modules: panels, stage, charts, nn-viz, player, sources, cartpole, policy, ws, app
+- `backend/` — FastAPI host (`server.py`), PPO training (`train.py`), recording (`record.py`), export/validation (`export.py`)
+- `data/` — tracked JSON: policy, training metrics, recorded episodes
+- `rl-contract.md` — the engineering contract the visualizer was built against
 
 ## License
 
