@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Spartan:wght@500&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; background: AliceBlue; font-family: 'Spartan', system-ui, sans-serif; color: #2d5f8a; }
+        #wrap { width: 52rem; max-width: calc(100vw - 2rem); margin: 1.5rem auto; }
+        h1 { font-size: 2.4rem; font-weight: 500; color: #6387A7; margin: 0 0 1rem; }
+        .frame { background: rgba(255, 255, 255, 0.65); border: 0.25rem solid #DDECFB; border-radius: 1.5rem; box-shadow: 0 0.4rem 1.2rem rgba(99, 135, 167, 0.15); padding: 1rem 1.25rem; margin-bottom: 1.5rem; }
+        .scene-content { position: relative; }
+        .scene-content > svg { display: block; width: 100%; }
+        #stage-shadow { position: absolute; left: 0; top: 0; width: 100%; aspect-ratio: 270 / 50; z-index: 0; pointer-events: none; }
+        #stage-svg { position: relative; z-index: 1; aspect-ratio: 270 / 50; }
+        #ruler { aspect-ratio: 270 / 16; overflow: visible; }
+        #ghost-canvas { position: absolute; left: 0; top: 0; z-index: 2; }
+        .ruler-base { stroke: #6387A7; stroke-width: 0.5; }
+        .ruler-tick { stroke: #8CBCE5; stroke-width: 0.6; }
+        #ruler text { fill: #6387A7; font-size: 7px; text-anchor: middle; }
+        .row { display: flex; flex-wrap: wrap; gap: 0.7rem; align-items: center; margin-bottom: 1rem; }
+        .row p { margin: 0; font-size: 1rem; color: #6387A7; min-width: 4rem; }
+        button { font-family: inherit; font-size: 1rem; padding: 0.45rem 1.1rem; background: #8CBCE5; color: #fff; border: 0.25rem solid #DDECFB; border-radius: 0.7rem; cursor: pointer; }
+        button:hover { background: #7ea9ce; }
+        button.on { background: #6387A7; }
+        select { font-family: inherit; font-size: 1rem; padding: 0.45rem 0.6rem; border: 0.25rem solid #DDECFB; border-radius: 0.7rem; background: #fff; color: #2d5f8a; }
+        #readouts { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+        .badge { background: rgba(255, 255, 255, 0.65); border: 0.25rem solid #DDECFB; border-radius: 0.9rem; padding: 0.6rem 1.2rem; min-width: 8.5rem; box-shadow: 0 0.3rem 0.9rem rgba(99, 135, 167, 0.12); }
+        .badge .cap { display: block; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: #6387A7; }
+        .badge .val { font-size: 1.6rem; font-weight: bold; color: #2d5f8a; white-space: nowrap; }
+        .badge .val.bad { color: #DC2626; }
+        #status { font-size: 1rem; color: #6387A7; margin: 0.8rem 0 0; min-height: 1.4rem; }
+    </style>
+</head>
+
+<body>
+
+<div id="wrap">
+
+    <h1> stage preview </h1>
+
+    <div class="frame">
+        <div class="frame-content scene-content">
+
+            <svg width="100" height="100" viewBox="-135 -40 270 50" id="stage-shadow" xmlns="http://www.w3.org/2000/svg" style="pointer-events: none">
+
+                <mask id="pendulum-shadow">
+                    <rect class="pole" x="-12.5" y="-55" width="5" height="65" style="fill: white; stroke: none" transform-origin="-10 10" />
+                    <circle class="top-circle" cx="-10" cy="10" r="10" style="fill: white; stroke: none" />
+                    <rect class="slider" x="-23" y="4.75" width="26" height="10.5" rx="2.75" style="fill: white; stroke: none" />
+                    <circle class="slider" cx="-21" cy="2.5" r="5" style="fill: white; stroke: none" />
+                    <circle class="slider" cx="1" cy="2.5" r="5" style="fill: white; stroke: none" />
+                    <circle class="slider" cx="-21" cy="17.5" r="6.5" style="fill: white; stroke: none" />
+                    <circle class="slider" cx="1" cy="17.5" r="6.5" style="fill: white; stroke: none" />
+                    <rect class="rail" x="-141.25" y="7.5" width="282.5" height="5" style="fill: white; stroke: none" />
+                </mask>
+
+                <rect x="-300" y="-300" width="600" height="600" mask="url(#pendulum-shadow)" style="stroke: none; fill: rgba(0, 0, 0, 0.07)" />
+
+            </svg>
+
+            <svg width="100" height="100" viewBox="-135 -40 270 50" id="stage-svg" xmlns="http://www.w3.org/2000/svg">
+
+                <defs>
+                    <linearGradient id="slider-gradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0" stop-color="#4d8ec9" />
+                        <stop offset="1" stop-color="#2d5f8a" />
+                    </linearGradient>
+                </defs>
+
+                <rect id="rail" x="-131.25" y="-2.5" width="262.5" height="5" />
+                <line x1="-130.75" y1="-1.5" x2="130.75" y2="-1.5" style="stroke: white; pointer-events: none;" />
+                <line x1="-131" y1="1.7" x2="131" y2="1.7" style="stroke: rgba(0, 0, 0, 0.15); pointer-events: none;" />
+
+                <mask id="slider-rail-shadow">
+                    <polygon class="slider" points="-13,-2.5 -13,2.5 -18,2.5 -14.5,-2.5" style="fill: white; stroke: none" />
+                </mask>
+
+                <rect x="-131.25" y="-2.5" width="262.5" height="5" mask="url(#slider-rail-shadow)" style="fill: rgba(0, 0, 0, 0.2); stroke: none; pointer-events: none;" />
+
+                <rect class="pole" x="-2.5" y="-65" width="5" height="65" />
+                <line class="pole" x1="1" y1="-64" x2="1" y2="0" style="stroke: white" />
+                <line class="pole" x1="-1.5" y1="-64" x2="-1.5" y2="0" style="stroke: rgba(0, 0, 0, 0.1);" />
+
+                <clipPath id="pole-shadow-clip">
+                    <rect class="pole" x="-2.5" y="-70" width="5" height="70" style="fill: black;" />
+                </clipPath>
+
+                <mask id="top-circle-shadow">
+                    <circle cx="0" cy="0" r="10" style="stroke: none; fill: white;" />
+                    <circle cx="2" cy="-2" r="10" style="stroke: none; fill: black;" />
+                </mask>
+
+                <mask id="top-circle-pole-shadow-mask">
+                    <circle class="top-circle" cx="-1.5" cy="2.5" r="11" style="stroke: none; fill: white;" />
+                </mask>
+
+                <rect x="-200" y="-200" width="400" height="400" mask="url(#top-circle-pole-shadow-mask)" clip-path="url(#pole-shadow-clip)" style="fill: rgba(0, 0, 0, 0.15); stroke: none" />
+
+                <circle class="top-circle" id="drag-target" cx="0" cy="0" r="20" style="fill: transparent; stroke: none;" />
+                <circle class="top-circle" cx="0" cy="0" r="10" style="fill: #b0e4fE" />
+                <circle class="top-circle" cx="4" cy="-4" r="1.7" style="fill: rgba(255, 255, 255, 0.6); stroke: none" />
+                <circle class="top-circle" cx="0" cy="0" r="10.5" mask="url(#top-circle-shadow)" style="fill: rgba(0, 0, 0, 0.1)" />
+
+                <mask id="slider-pole-shadow-mask">
+                    <rect class="slider" x="-18.5" y="-5" width="34.7" height="20" rx="5" style="fill: white; stroke: none" />
+                </mask>
+
+                <rect x="-200" y="-200" width="400" height="400" mask="url(#slider-pole-shadow-mask)" clip-path="url(#pole-shadow-clip)" style="fill: rgba(0, 0, 0, 0.15); stroke: none" />
+                <g class="slider">
+
+                    <rect x="-13" y="-5.25" width="26" height="10.5" rx="2.75" style="fill: #2d5f8a; stroke: black" />
+                    <rect x="-11.5" y="-3.7" width="23" height="7.4" rx="1.5" style="fill: url(#slider-gradient); stroke: none" />
+
+                    <g transform="translate(-11, -7.5)">
+                        <circle r="5" style="fill: #2E3C56; stroke: black" />
+                        <circle r="3" style="fill: #42577D; stroke: none" />
+                        <circle r="1" style="fill: #111827; stroke: none" />
+                        <path d="M -3.1 -3.1 A 4.2 4.2 0 0 1 -0.6 -3.9" style="fill: none; stroke: white; stroke-width: 0.6; stroke-linecap: round" />
+                    </g>
+                    <g transform="translate(11, -7.5)">
+                        <circle r="5" style="fill: #2E3C56; stroke: black" />
+                        <circle r="3" style="fill: #42577D; stroke: none" />
+                        <circle r="1" style="fill: #111827; stroke: none" />
+                        <path d="M -3.1 -3.1 A 4.2 4.2 0 0 1 -0.6 -3.9" style="fill: none; stroke: white; stroke-width: 0.6; stroke-linecap: round" />
+                    </g>
+                    <g transform="translate(-11, 7.5)">
+                        <circle r="6.5" style="fill: #2E3C56; stroke: black" />
+                        <circle r="3.9" style="fill: #42577D; stroke: none" />
+                        <circle r="1.3" style="fill: #111827; stroke: none" />
+                        <path d="M -4.03 4.03 A 5.46 5.46 0 0 0 -0.78 5.07" style="fill: none; stroke: white; stroke-width: 0.6; stroke-linecap: round" />
+                    </g>
+                    <g transform="translate(11, 7.5)">
+                        <circle r="6.5" style="fill: #2E3C56; stroke: black" />
+                        <circle r="3.9" style="fill: #42577D; stroke: none" />
+                        <circle r="1.3" style="fill: #111827; stroke: none" />
+                        <path d="M -4.03 4.03 A 5.46 5.46 0 0 0 -0.78 5.07" style="fill: none; stroke: white; stroke-width: 0.6; stroke-linecap: round" />
+                    </g>
+
+                    <g transform="rotate(34.1)">
+                        <rect x="-15" y="-2.5" width="30" height="5" rx="1.25" style="fill: #788EA8; stroke: black" />
+                        <rect x="-14" y="-2.25" width="28" height="2" rx="1" style="fill: #92A9C4; stroke: none" />
+                        <circle cx="-12.5" r="1" style="fill: #1A2536; stroke: none" />
+                        <circle cx="12.5" r="1" style="fill: #1A2536; stroke: none" />
+                    </g>
+                    <g transform="rotate(-34.1)">
+                        <rect x="-15" y="-2.5" width="30" height="5" rx="1.25" style="fill: #788EA8; stroke: black" />
+                        <rect x="-14" y="-2.25" width="28" height="2" rx="1" style="fill: #92A9C4; stroke: none" />
+                        <circle cx="-12.5" r="1" style="fill: #1A2536; stroke: none" />
+                        <circle cx="12.5" r="1" style="fill: #1A2536; stroke: none" />
+                    </g>
+
+                    <circle r="4" style="fill: #A8D3FF; stroke: black" />
+                    <circle r="2" style="fill: #E0F2FE; stroke: none" />
+                    <circle r="0.8" style="fill: #DC2626; stroke: none" />
+
+                </g>
+
+            </svg>
+
+            <svg width="100" height="16" viewBox="-135 0 270 16" id="ruler" xmlns="http://www.w3.org/2000/svg"></svg>
+
+            <canvas id="ghost-canvas"></canvas>
+
+        </div>
+    </div>
+
+    <div class="frame">
+
+        <div class="row">
+            <p> agents </p>
+            <button type="button" data-agents="1">1</button>
+            <button type="button" data-agents="128">128</button>
+            <button type="button" data-agents="1000">1000</button>
+            <p> speed </p>
+            <select id="speed">
+                <option value="0">0.5&times;</option>
+                <option value="1">1&times;</option>
+                <option value="2">2&times;</option>
+                <option value="3">4&times;</option>
+                <option value="4">8&times;</option>
+                <option value="5">MAX</option>
+            </select>
+            <button type="button" id="ghosts" class="on"> trails </button>
+        </div>
+
+        <div id="readouts">
+            <div class="badge"><span class="cap">fps</span><span class="val" id="ro-fps"> &ndash; </span></div>
+            <div class="badge"><span class="cap">sim ms</span><span class="val" id="ro-ms"> &ndash; </span></div>
+            <div class="badge"><span class="cap">steps/s</span><span class="val" id="ro-steps"> &ndash; </span></div>
+            <div class="badge"><span class="cap">ghosts</span><span class="val" id="ro-ghosts"> &ndash; </span></div>
+            <div class="badge"><span class="cap">trail</span><span class="val" id="ro-trail"> &ndash; </span></div>
+            <div class="badge"><span class="cap">hero</span><span class="val" id="ro-hero"> &ndash; </span></div>
+        </div>
+
+        <p id="status"> loading </p>
+
+    </div>
+
+</div>
+
+<script type="text/javascript" src="../js/cartpole.js"> </script>
+<script type="text/javascript" src="../js/policy.js"> </script>
+<script type="text/javascript" src="../js/stage.js"> </script>
+<script type="text/javascript">
+( function () {
+
+    "use strict";
+
+    const CP = RL.cartpole;
+    const POLICY = RL.policy;
+    const STAGE = RL.stage;
+    const SPEEDS = [ 0.5, 1, 2, 4, 8, "MAX" ];
+    const UNIT = 130 / 2.4;
+    const HOLD = 14;
+
+    const params = new URLSearchParams( location.search );
+    let agents = parseInt( params.get( "agents" ), 10 );
+    if( agents !== 1 && agents !== 128 && agents !== 1000 ) agents = 128;
+    let speedIdx = parseInt( params.get( "speed" ), 10 );
+    if( !( speedIdx >= 0 && speedIdx < SPEEDS.length ) ) speedIdx = 2;
+    let trails = params.get( "trails" ) !== "0";
+
+    let states = null;
+    let obs32 = null;
+    let dones = null;
+    let hold = null;
+    let steps = null;
+    let model = null;
+
+    const elFps = document.getElementById( "ro-fps" );
+    const elMs = document.getElementById( "ro-ms" );
+    const elSteps = document.getElementById( "ro-steps" );
+    const elGhosts = document.getElementById( "ro-ghosts" );
+    const elTrail = document.getElementById( "ro-trail" );
+    const elHero = document.getElementById( "ro-hero" );
+    const elStatus = document.getElementById( "status" );
+    const elSpeed = document.getElementById( "speed" );
+    const elGhostsBtn = document.getElementById( "ghosts" );
+    const btns = Array.prototype.slice.call( document.querySelectorAll( "[data-agents]" ) );
+
+    function trailFor( n ) {
+        if( n <= 32 ) return 64;
+        if( n <= 256 ) return 16;
+        return 6;
+    }
+
+    function respawn( i ) {
+        const s = CP.reset();
+        const o = i * 4;
+        for( let j = 0; j < 4; j++ ) states[ o + j ] = s[ j ];
+        steps[ i ] = 0;
+        dones[ i ] = 0;
+        hold[ i ] = 0;
+    }
+
+    function alloc() {
+        states = new Float64Array( agents * 4 );
+        obs32 = new Float32Array( agents * 4 );
+        dones = new Uint8Array( agents );
+        hold = new Int32Array( agents );
+        steps = new Int32Array( agents );
+        for( let i = 0; i < agents; i++ ) respawn( i );
+        elGhosts.textContent = String( agents - 1 );
+        elTrail.textContent = String( trailFor( agents ) );
+        btns.forEach( function ( b ) {
+            b.classList.toggle( "on", parseInt( b.getAttribute( "data-agents" ), 10 ) === agents );
+        } );
+    }
+
+    function stepAgents() {
+        for( let i = 0; i < agents; i++ ) {
+            if( dones[ i ] ) continue;
+            const o = i * 4;
+            let act = 0;
+            if( model ) act = model.forward( states.subarray( o, o + 4 ), {} ).action;
+            const r = CP.step( states.subarray( o, o + 4 ), act | 0 );
+            const ns = r.state;
+            states[ o ] = ns[ 0 ];
+            states[ o + 1 ] = ns[ 1 ];
+            states[ o + 2 ] = ns[ 2 ];
+            states[ o + 3 ] = ns[ 3 ];
+            steps[ i ]++;
+            if( r.terminated || steps[ i ] >= 500 ) {
+                dones[ i ] = 1;
+                hold[ i ] = HOLD;
+            }
+        }
+    }
+
+    function refreshHeroBadge() {
+        const el = document.querySelector( "#stage-svg .pole" );
+        if( !el ) return;
+        const t = el.style.transform || "";
+        const mr = /rotate\((-?[\d.]+)deg\)/.exec( t );
+        const mt = /translate\((-?[\d.]+)px/.exec( t );
+        const wantDeg = states[ 2 ] * 180 / Math.PI;
+        const wantTx = states[ 0 ] * UNIT;
+        const ok = !!mr && !!mt
+            && Math.abs( parseFloat( mr[ 1 ] ) - wantDeg ) < 0.02
+            && Math.abs( parseFloat( mt[ 1 ] ) - wantTx ) < 0.02;
+        elHero.textContent = ( ok ? "" : "bad " ) + ( Math.round( wantDeg * 10 ) / 10 ) + "\u00B0";
+        elHero.classList.toggle( "bad", !ok );
+    }
+
+    let last = 0;
+    let acc = 0;
+    let frames = 0;
+    let iters = 0;
+    let simMs = 0;
+    let marks = 0;
+
+    function frame( now ) {
+        requestAnimationFrame( frame );
+        if( !last ) {
+            last = now;
+            marks = now;
+            return;
+        }
+        const dt = Math.min( 0.25, ( now - last ) / 1000 );
+        last = now;
+        const t0 = performance.now();
+        const speed = SPEEDS[ speedIdx ];
+        let ran = 0;
+        if( speed === "MAX" ) {
+            while( ran < 64 && performance.now() - t0 < 8 ) {
+                stepAgents();
+                ran++;
+            }
+        } else {
+            acc += dt * 50 * speed;
+            if( acc > 4 ) acc = 4;
+            while( acc >= 1 && ran < 16 ) {
+                stepAgents();
+                acc -= 1;
+                ran++;
+            }
+        }
+        iters += ran;
+        for( let i = 0; i < agents; i++ ) {
+            if( dones[ i ] && --hold[ i ] <= 0 ) respawn( i );
+        }
+        for( let i = 0; i < agents; i++ ) {
+            const o = i * 4;
+            obs32[ o ] = states[ o ];
+            obs32[ o + 1 ] = states[ o + 1 ];
+            obs32[ o + 2 ] = states[ o + 2 ];
+            obs32[ o + 3 ] = states[ o + 3 ];
+        }
+        STAGE.setAgents( obs32, dones );
+        STAGE.setHero( states.subarray( 0, 4 ) );
+        simMs += performance.now() - t0;
+        frames++;
+        refreshHeroBadge();
+        if( now - marks >= 500 ) {
+            const span = now - marks;
+            elFps.textContent = ( frames * 1000 / span ).toFixed( 1 );
+            elMs.textContent = ( simMs / frames ).toFixed( 2 );
+            elSteps.textContent = Math.round( iters * 1000 / span * agents ).toLocaleString( "en-US" );
+            frames = 0;
+            iters = 0;
+            simMs = 0;
+            marks = now;
+        }
+    }
+
+    btns.forEach( function ( b ) {
+        b.addEventListener( "click", function () {
+            agents = parseInt( b.getAttribute( "data-agents" ), 10 );
+            alloc();
+        } );
+    } );
+
+    elSpeed.value = String( speedIdx );
+    elSpeed.addEventListener( "change", function () {
+        speedIdx = parseInt( elSpeed.value, 10 );
+        acc = 0;
+    } );
+
+    elGhostsBtn.classList.toggle( "on", trails );
+    elGhostsBtn.addEventListener( "click", function () {
+        trails = !trails;
+        elGhostsBtn.classList.toggle( "on", trails );
+        STAGE.setGhostTrails( trails );
+    } );
+
+    STAGE.init();
+    STAGE.setGhostTrails( trails );
+    alloc();
+
+    fetch( "../data/policy.json" ).then( function ( r ) {
+        return r.json();
+    } ).then( function ( json ) {
+        model = POLICY.fromJSON( json );
+        elStatus.textContent = "policy loaded \u00B7 " + ( json.arch ? json.arch.join( "\u2192" ) : "arch?" )
+            + " \u00B7 " + ( json.evalScore !== undefined ? "eval " + json.evalScore : "" );
+    } ).catch( function ( e ) {
+        elStatus.textContent = "policy.json unavailable (" + e.message + ")";
+    } );
+
+    requestAnimationFrame( frame );
+
+})();
+</script>
+
+</body>
+</html>
