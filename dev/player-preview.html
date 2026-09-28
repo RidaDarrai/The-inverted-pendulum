@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>player preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spartan:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { background: AliceBlue; }
+    body {
+        font-family: 'Spartan', sans-serif;
+        color: #6387A7;
+        padding: 1.5rem 1rem 3rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .control-frame {
+        position: relative;
+        width: min(54rem, 96vw);
+        background: rgba(255,255,255,0.65);
+        border: 0.25rem solid #DDECFB;
+        border-radius: 1.5rem;
+        box-shadow: 0 0.4rem 1.2rem rgba(99,135,167,0.15);
+        margin-bottom: 1.5rem;
+        padding: 1.2rem 1.6rem 1.6rem;
+    }
+    .panel-title {
+        font-size: 1.4rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.12rem;
+        margin-bottom: 0.8rem;
+    }
+    #hud {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        align-items: center;
+        justify-content: center;
+        width: min(54rem, 96vw);
+    }
+    .btn {
+        font-family: 'Spartan', sans-serif;
+        font-size: 1.2rem;
+        color: #fff;
+        background: #8CBCE5;
+        border: 0.25rem solid #8CBCE5;
+        border-radius: 0.7rem;
+        padding: 0.55rem 1.5rem;
+        cursor: pointer;
+    }
+    .btn:hover { background: #7ea9ce; border-color: #7ea9ce; }
+    .btn:active { background: #6387A7; border-color: #6387A7; }
+    .btn.active { background: #6387A7; border-color: #6387A7; }
+    .badge {
+        background: rgba(255,255,255,0.65);
+        border: 0.25rem solid #DDECFB;
+        border-radius: 1.5rem;
+        box-shadow: 0 0.4rem 1.2rem rgba(99,135,167,0.15);
+        padding: 0.6rem 1.2rem;
+        text-align: center;
+        min-width: 6.5rem;
+    }
+    .badge .cap {
+        display: block;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08rem;
+        color: #6387A7;
+    }
+    .badge .val {
+        display: block;
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: #6387A7;
+    }
+    .field {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1.1rem;
+        color: #6387A7;
+    }
+    select {
+        font-family: 'Spartan', sans-serif;
+        font-size: 1.1rem;
+        color: #6387A7;
+        background: rgba(255,255,255,0.8);
+        border: 0.15rem solid #DDECFB;
+        border-radius: 0.5rem;
+        padding: 0.4rem 0.6rem;
+    }
+    #seek-range { width: 14rem; }
+    #seek-row {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        margin-top: 1rem;
+        font-size: 1.1rem;
+        color: #6387A7;
+    }
+    #stream-line {
+        width: min(54rem, 96vw);
+        text-align: center;
+        font-size: 1rem;
+        color: #6387A7;
+        margin-bottom: 0.8rem;
+    }
+</style>
+</head>
+<body>
+
+<div class="control-frame">
+    <p class="panel-title">transport</p>
+    <div id="hud">
+        <button type="button" class="btn active" id="mode-replay">replay</button>
+        <button type="button" class="btn" id="mode-live">live</button>
+        <button type="button" class="btn" id="playpause">pause</button>
+        <button type="button" class="btn" id="btn-reset">reset</button>
+        <button type="button" class="btn" id="stochastic-btn">deterministic</button>
+        <label class="field">speed
+            <select id="speed-sel"></select>
+        </label>
+        <label class="field">agents
+            <select id="agents-sel"></select>
+        </label>
+    </div>
+    <div id="seek-row">
+        <span>episode</span>
+        <input type="range" id="seek-range" min="0" max="1000" value="0">
+        <span id="seek-pct">0%</span>
+    </div>
+</div>
+
+<div id="hud">
+    <div class="badge"><span class="cap">steps/s</span><span class="val" id="steps-val">—</span></div>
+    <div class="badge"><span class="cap">agents</span><span class="val" id="agents-val">—</span></div>
+    <div class="badge"><span class="cap">alive</span><span class="val" id="alive-val">—</span></div>
+    <div class="badge"><span class="cap">mean</span><span class="val" id="mean-val">—</span></div>
+    <div class="badge"><span class="cap">best</span><span class="val" id="best-val">—</span></div>
+    <div class="badge"><span class="cap">fps</span><span class="val" id="fps-val">—</span></div>
+</div>
+
+<div id="stream-line">
+    mode <span id="mode-val">replay</span> ·
+    step <span id="step-val">0</span> ·
+    t <span id="sim-val">0.0</span>s ·
+    progress <span id="progress-val">0</span>%
+</div>
+
+<script src="../js/policy.js"></script>
+<script src="../js/cartpole.js"></script>
+<script src="../js/sources.js"></script>
+<script src="../js/player.js"></script>
+<script>
+( function () {
+
+    "use strict";
+
+    window.__errs = [];
+
+    window.addEventListener( "error", function ( e ) {
+
+        window.__errs.push( String( e.message || e ) );
+
+    } );
+
+    const hud = window.__hud = {
+        mode: "replay",
+        steps: 0,
+        agents: 0,
+        alive: 0,
+        mean: 0,
+        best: 0,
+        globalStep: 0,
+        simTime: 0,
+        progress: 0,
+        playing: true,
+        wrapped: false
+    };
+
+    const stepsEl = document.getElementById( "steps-val" );
+    const agentsEl = document.getElementById( "agents-val" );
+    const aliveEl = document.getElementById( "alive-val" );
+    const meanEl = document.getElementById( "mean-val" );
+    const bestEl = document.getElementById( "best-val" );
+    const fpsEl = document.getElementById( "fps-val" );
+    const modeValEl = document.getElementById( "mode-val" );
+    const stepEl = document.getElementById( "step-val" );
+    const simEl = document.getElementById( "sim-val" );
+    const progressEl = document.getElementById( "progress-val" );
+    const playpauseEl = document.getElementById( "playpause" );
+    const stochasticEl = document.getElementById( "stochastic-btn" );
+    const seekRange = document.getElementById( "seek-range" );
+    const seekPct = document.getElementById( "seek-pct" );
+    const speedSel = document.getElementById( "speed-sel" );
+    const agentsSel = document.getElementById( "agents-sel" );
+    const modeReplayBtn = document.getElementById( "mode-replay" );
+    const modeLiveBtn = document.getElementById( "mode-live" );
+
+    function fmt( v ) {
+
+        return Math.round( v ).toLocaleString( "en-US" );
+
+    }
+
+    for( let i = 0; i < SPEED_PRESETS.length; i++ ) {
+
+        const p = SPEED_PRESETS[ i ];
+        const opt = document.createElement( "option" );
+
+        opt.value = String( i );
+        opt.textContent = p === "MAX" ? "MAX" : "x" + p;
+        speedSel.appendChild( opt );
+
+    }
+
+    speedSel.value = "2";
+
+    for( let i = 0; i < AGENT_PRESETS.length; i++ ) {
+
+        const opt = document.createElement( "option" );
+
+        opt.value = String( AGENT_PRESETS[ i ] );
+        opt.textContent = String( AGENT_PRESETS[ i ] );
+        agentsSel.appendChild( opt );
+
+    }
+
+    agentsSel.value = "1";
+
+    let prevProgress = 1;
+
+    RL.player.onBatch( function ( b ) {
+
+        hud.agents = b.n;
+        hud.alive = b.population.alive;
+        hud.mean = b.population.meanReturn;
+        hud.best = b.population.bestReturn;
+        hud.globalStep = b.globalStep;
+        hud.simTime = b.simTime;
+        hud.progress = b.episodeProgress;
+
+        if( b.episodeProgress + 0.2 < prevProgress ) hud.wrapped = true;
+
+        prevProgress = b.episodeProgress;
+
+        agentsEl.textContent = String( b.n );
+        aliveEl.textContent = String( b.population.alive );
+        meanEl.textContent = fmt( b.population.meanReturn );
+        bestEl.textContent = fmt( b.population.bestReturn );
+        stepEl.textContent = fmt( b.globalStep );
+        simEl.textContent = b.simTime.toFixed( 1 );
+        progressEl.textContent = String( Math.round( b.episodeProgress * 100 ) );
+
+    } );
+
+    setInterval( function () {
+
+        const info = RL.player.info();
+        const s = Math.round( info.stepsPerSec || 0 );
+
+        hud.steps = s;
+        stepsEl.textContent = fmt( s );
+
+    }, 250 );
+
+    let frames = 0;
+    let fpsT = performance.now();
+
+    function fpsLoop( now ) {
+
+        frames++;
+
+        if( now - fpsT >= 500 ) {
+
+            fpsEl.textContent = ( frames * 1000 / ( now - fpsT ) ).toFixed( 1 );
+            frames = 0;
+            fpsT = now;
+
+        }
+
+        requestAnimationFrame( fpsLoop );
+
+    }
+
+    requestAnimationFrame( fpsLoop );
+
+    function setModeUI( mode ) {
+
+        hud.mode = mode;
+        modeValEl.textContent = mode;
+        modeReplayBtn.classList.toggle( "active", mode === "replay" );
+        modeLiveBtn.classList.toggle( "active", mode === "live" );
+        seekRange.disabled = mode === "live";
+
+    }
+
+    modeReplayBtn.addEventListener( "click", function () {
+
+        RL.player.setMode( "replay" );
+        setModeUI( "replay" );
+
+    } );
+
+    modeLiveBtn.addEventListener( "click", function () {
+
+        RL.player.setMode( "live" );
+        setModeUI( "live" );
+
+    } );
+
+    playpauseEl.addEventListener( "click", function () {
+
+        if( hud.playing ) {
+
+            RL.player.pause();
+            hud.playing = false;
+            playpauseEl.textContent = "play";
+
+        } else {
+
+            RL.player.play();
+            hud.playing = true;
+            playpauseEl.textContent = "pause";
+
+        }
+
+    } );
+
+    document.getElementById( "btn-reset" ).addEventListener( "click", function () {
+
+        RL.player.reset();
+        prevProgress = 1;
+
+    } );
+
+    stochasticEl.addEventListener( "click", function () {
+
+        const on = stochasticEl.classList.toggle( "active" );
+
+        stochasticEl.textContent = on ? "stochastic" : "deterministic";
+        RL.player.setStochastic( on );
+
+    } );
+
+    speedSel.addEventListener( "change", function () {
+
+        RL.player.setSpeed( Number( speedSel.value ) );
+
+    } );
+
+    agentsSel.addEventListener( "change", function () {
+
+        RL.player.setAgents( Number( agentsSel.value ) );
+
+    } );
+
+    seekRange.addEventListener( "input", function () {
+
+        const frac = Number( seekRange.value ) / 1000;
+
+        seekPct.textContent = Math.round( frac * 100 ) + "%";
+        RL.player.seek( frac );
+
+    } );
+
+    setModeUI( "replay" );
+
+    RL.player.init().then( function () {
+
+        RL.player.setMode( "replay" );
+        RL.player.play();
+
+    } );
+
+} )();
+</script>
+
+</body>
+</html>
