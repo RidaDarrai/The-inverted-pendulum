@@ -257,6 +257,11 @@
         simEl.textContent = b.simTime.toFixed( 1 );
         progressEl.textContent = String( Math.round( b.episodeProgress * 100 ) );
 
+        const live = Math.round( RL.player.info().stepsPerSec || 0 );
+
+        hud.steps = live;
+        stepsEl.textContent = fmt( live );
+
     } );
 
     setInterval( function () {
