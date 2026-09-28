@@ -4,10 +4,12 @@ version = "0.1.0"
 description = "PPO training, policy export and episode recording for the RL visualizer"
 requires-python = ">=3.13"
 dependencies = [
+    "fastapi>=0.115",
     "gymnasium>=1.0",
     "numpy>=2.0",
     "stable-baselines3>=2.4",
     "torch>=2.5",
+    "uvicorn[standard]>=0.30",
 ]
 
 [tool.uv]
