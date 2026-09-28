@@ -42,6 +42,15 @@
 
             const elapsed = ( t - lastT ) / 1000;
 
+            if( steps < lastSteps ) {
+
+                lastT = t;
+                lastSteps = steps;
+
+                return 0;
+
+            }
+
             if( elapsed >= 0.25 ) {
 
                 rate = ( steps - lastSteps ) / elapsed;
@@ -287,7 +296,7 @@
 
                         recordCompleted( returns[ i ] );
                         dones[ i ] = 1;
-                        fade[ i ] = FADE_WALL;
+                        fade[ i ] = FADE_WALL * ( 0.75 + 0.5 * rng() );
 
                     }
 
