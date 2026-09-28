@@ -500,3 +500,33 @@ input[type=range]::-moz-range-track {
     width: 100%;
     min-height: 12rem;
 }
+
+
+/* ---------- control states ---------- */
+
+#control-buttons button.active {
+    background-color: #6387A7;
+    border: 0.25rem solid #6387A7;
+}
+
+#control-buttons button.active:hover,
+#control-buttons button.active:focus {
+    background-color: #6387A7;
+    border: 0.25rem solid #6387A7;
+}
+
+#episode-select:disabled,
+input[type="range"]:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+input[type="range"]:disabled::-webkit-slider-thumb {
+    background-color: #C9DFF4;
+    cursor: not-allowed;
+}
+
+input[type="range"]:disabled::-moz-range-thumb {
+    background-color: #C9DFF4;
+    cursor: not-allowed;
+}
