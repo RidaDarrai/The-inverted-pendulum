@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "solved": true,
+  "generations": [
+    {
+      "gen": 1,
+      "timesteps": 10000,
+      "best": 136.3,
+      "mean": 136.3,
+      "wallTime": 3.15
+    },
+    {
+      "gen": 2,
+      "timesteps": 20000,
+      "best": 376.2,
+      "mean": 376.2,
+      "wallTime": 7.45
+    },
+    {
+      "gen": 3,
+      "timesteps": 30000,
+      "best": 417.7,
+      "mean": 417.7,
+      "wallTime": 12.6
+    },
+    {
+      "gen": 4,
+      "timesteps": 40000,
+      "best": 470.2,
+      "mean": 470.2,
+      "wallTime": 17.17
+    },
+    {
+      "gen": 5,
+      "timesteps": 50000,
+      "best": 470.2,
+      "mean": 363.4,
+      "wallTime": 22.2
+    },
+    {
+      "gen": 6,
+      "timesteps": 60000,
+      "best": 490.1,
+      "mean": 490.1,
+      "wallTime": 27.0
+    }
+  ]
+}
