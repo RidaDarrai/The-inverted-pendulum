@@ -10,7 +10,7 @@ Work only inside `The inverted pendulum/`.
 NEVER modify: `inverted-pendulum.css`, `inverted-pendulum.js`, `index.html`,
 `media/`, `LICENSE`. `README.md` is owned by T10 only.
 `inverted-pendulum.html` — single exception: one link
-`<a href="rl-visualizer.html">rl visualizer</a>` inside `#bottom-text` (T1 only).
+`<a id="rl-button" href="rl-visualizer.html">rl</a>` beside `#title` inside `#title-row` (T1 only).
 
 Everything else is a new file. Never edit files owned by another task (§9).
 
@@ -53,10 +53,10 @@ DOM ids later tasks wire:
   `#episode-select`, `#scrubber`, `#step-readout`
 - `#nn-frame` → `#nn-container` · `#telemetry-frame` → `#telemetry-container` ·
   `#score-frame` → `#score-container`
-- `#data-notice` → `#data-notice-text`: fixed-overlay error banner shown when
-  `data/*.json` cannot load (e.g. `file://` blocks `fetch`). Lives under
-  `#background`, **never** under `#container` — `freezePanelRows()` maps every
-  container child to a grid track, so a hidden child desyncs the layout.
+- `#title-row` > `#back-button` + `#title`: mirror of the pendulum page title
+  (same size, font, location) with a circular back link to
+  `inverted-pendulum.html` on the left. Data-load failures only log to the
+  console — the old `#data-notice` banner was removed.
 
 T1 ships no-op stubs (correct exports, empty bodies) for every `js/*.js` module so
 the page runs with zero console errors before other tasks land.
