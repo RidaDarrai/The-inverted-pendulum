@@ -32,7 +32,7 @@ Two ways, same files:
   ```
   python -m http.server 8000
   ```
-  then <http://127.0.0.1:8000/rl-visualizer.html>. `data/*.json` are read as plain files — no backend, no live updates. Opening the file directly (`file://`) also runs the page, minus those JSON fetches (browsers block them).
+  then <http://127.0.0.1:8000/rl-visualizer.html>. `data/*.json` are read as plain files — no backend, no live updates; replay starts playing as soon as the data loads. Opening the file directly (`file://`) does not work: browsers block `fetch` there, so the page shows a notice telling you to serve it over HTTP.
 - **With the backend** — a FastAPI host that serves the visualizer at `/`, answers `/api/health`, and pushes a WebSocket stream of `rl:metrics` / `rl:policy` events whenever `data/training_metrics.json` or `data/policy.json` change on disk:
   ```
   cd backend

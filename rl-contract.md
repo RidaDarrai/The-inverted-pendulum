@@ -53,6 +53,10 @@ DOM ids later tasks wire:
   `#episode-select`, `#scrubber`, `#step-readout`
 - `#nn-frame` → `#nn-container` · `#telemetry-frame` → `#telemetry-container` ·
   `#score-frame` → `#score-container`
+- `#data-notice` → `#data-notice-text`: fixed-overlay error banner shown when
+  `data/*.json` cannot load (e.g. `file://` blocks `fetch`). Lives under
+  `#background`, **never** under `#container` — `freezePanelRows()` maps every
+  container child to a grid track, so a hidden child desyncs the layout.
 
 T1 ships no-op stubs (correct exports, empty bodies) for every `js/*.js` module so
 the page runs with zero console errors before other tasks land.

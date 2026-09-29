@@ -54,6 +54,19 @@
         return target[ method ]( a, b, c );
     }
 
+    function showDataNotice( message ) {
+        const text = byId( "data-notice-text" );
+        if ( text ) text.textContent = message;
+        const notice = byId( "data-notice" );
+        if ( notice ) notice.classList.add( "visible" );
+        if ( typeof console !== "undefined" && console.error ) console.error( "[rl-visualizer] " + message );
+    }
+
+    function hideDataNotice() {
+        const notice = byId( "data-notice" );
+        if ( notice ) notice.classList.remove( "visible" );
+    }
+
     function clampInt( value, min, max ) {
         const n = Math.round( Number( value ) );
         if ( !isFinite( n ) ) return min;
@@ -159,6 +172,17 @@
 
     function applyData( data ) {
         if ( !data ) return;
+
+        const nothingLoaded = !data.policy && !data.metrics && !data.episodes;
+        if ( nothingLoaded ) {
+            const fileMode = typeof location !== "undefined" && location.protocol === "file:";
+            showDataNotice( fileMode
+                ? "data/*.json cannot be fetched from file:// \u2014 serve this folder over HTTP (python -m http.server) and open rl-visualizer.html from there"
+                : "data/*.json could not be loaded \u2014 serve the folder containing this page over HTTP (python -m http.server)" );
+        } else {
+            hideDataNotice();
+        }
+
         if ( data.policy ) {
             state.policy = data.policy;
             call( ns().nnviz, "setPolicy", data.policy );
@@ -172,6 +196,8 @@
             fillEpisodeSelect( data.episodes );
         }
         setText( "step-readout", "0 / " + episodeLength() );
+
+        if ( data.episodes && state.mode === "replay" && !state.playing ) startPlayback();
     }
 
     function fillEpisodeSelect( episodes ) {
@@ -357,15 +383,19 @@
         setText( "step-readout", "0 / " + episodeLength() );
     }
 
+    function startPlayback() {
+        call( ns().player, "play" );
+        state.playing = true;
+        setText( "play-pause", "pause" );
+    }
+
     function togglePlay() {
         if ( state.playing ) {
             call( ns().player, "pause" );
             state.playing = false;
             setText( "play-pause", "play" );
         } else {
-            call( ns().player, "play" );
-            state.playing = true;
-            setText( "play-pause", "pause" );
+            startPlayback();
         }
     }
 
@@ -509,6 +539,7 @@
         window.addEventListener( "rl:metrics", function ( event ) {
             const metrics = event && event.detail;
             if ( !metrics ) return;
+            hideDataNotice();
             state.metrics = metrics;
             updateTrainingBadges( metrics );
         } );
@@ -516,6 +547,7 @@
         window.addEventListener( "rl:policy", function ( event ) {
             const policy = event && event.detail;
             if ( !policy ) return;
+            hideDataNotice();
             state.policy = policy;
             call( ns().nnviz, "setPolicy", policy );
         } );

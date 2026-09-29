@@ -137,6 +137,38 @@ button:focus {
 }
 
 
+/* ---------- data notice ---------- */
+
+#data-notice {
+    position: fixed;
+    top: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    display: none;
+    max-width: min(90vw, 72rem);
+    background-color: rgba(255, 255, 255, 0.92);
+    border: 0.25rem solid #DDECFB;
+    border-radius: 1.5rem;
+    box-shadow: 0 0.4rem 1.2rem rgba(99, 135, 167, 0.15);
+    padding: 1rem 1.6rem;
+    justify-content: center;
+    text-align: center;
+}
+
+#data-notice.visible {
+    display: flex;
+}
+
+#data-notice-text {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #6387A7;
+    line-height: 1.4;
+    white-space: normal;
+}
+
+
 /* ---------- frames ---------- */
 
 .control-frame {
