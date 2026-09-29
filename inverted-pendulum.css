@@ -35,10 +35,17 @@ body {
     transform: scale(1);
 }
 
-#title {
+#title-row {
     grid-row: 1;
     grid-column: 1;
     justify-self: center;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    transform: translateY(-1rem);
+}
+
+#title {
     font-size: 3.5rem;
     white-space: nowrap;
     color: #8CBCE5;
@@ -61,7 +68,7 @@ body.controller-on .swing-button {
     display: inline-block;
 }
 
-button {
+button, #rl-button {
     min-width: 6rem;
     font-size: 1.2rem;
     color: white;
@@ -73,15 +80,30 @@ button {
     border: 0.25rem solid #8CBCE5;
 }
 
-button:hover {
+#rl-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 5.25rem;
+    height: 5.25rem;
+    min-width: 5.25rem;
+    padding: 0;
+    border-radius: 50%;
+    font-size: 1.8rem;
+    font-weight: 700;
+    opacity: 1;
+    text-decoration: none;
+}
+
+button:hover, #rl-button:hover {
     border: 0.25rem solid #7ea9ce;
 }
 
-button:active {
+button:active, #rl-button:active {
     background: #6387A7;
 }
 
-button:focus {
+button:focus, #rl-button:focus {
     outline: none;
     border: 0.25rem solid #6387A7;
 }

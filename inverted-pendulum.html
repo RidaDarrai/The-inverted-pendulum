@@ -4,7 +4,7 @@
 
 <head>
     <link rel="preconnect" href="https://fonts.gstatic.com">
-    <link href="https://fonts.googleapis.com/css2?family=Spartan:wght@500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Spartan:wght@500;700&display=swap" rel="stylesheet">
     <link href="inverted-pendulum.css" rel="stylesheet">
 </head>
 
@@ -14,7 +14,10 @@
 
     <div id="container">
         
-        <h1 id="title"> inverted pendulum </h1>
+        <div id="title-row">
+            <h1 id="title"> inverted pendulum </h1>
+            <a id="rl-button" href="rl-visualizer.html"> RL </a>
+        </div>
         
         <div class="control-frame" id="upper-frame">
 
@@ -100,7 +103,7 @@
 
         <p style="margin-top: 2rem; font-size: 1.3rem;"> this is a simulation of an inverted pendulum with a PD controller to bring the pendulum angle θ and silder displacement x to zero. it uses RK4 numerical integration and the controller function at the top of the JS code can be easily modified to test new controllers. you can also drag the pendulum around by tapping or clicking. </p>
 
-        <p id="bottom-text"> made by <a href="https://github.com/RidaDarrai" target="_blank"> Darrai RIDA </a> &middot; <a href="rl-visualizer.html">rl visualizer</a> </p>
+        <p id="bottom-text"> made by <a href="https://github.com/RidaDarrai" target="_blank"> Darrai RIDA </a> </p>
 
         <div class="control-frame" id="scene-frame">
 
