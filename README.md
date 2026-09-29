@@ -22,9 +22,11 @@ Open `inverted-pendulum.html`. That is the whole setup.
 
 ## RL Visualizer
 
-`rl-visualizer.html` is the project's second page: a dashboard for the reinforcement-learning side of the same CartPole. It plays back recorded episodes of a trained PPO policy, runs that policy live against a JavaScript port of the environment (up to 1000 agents), and — when the backend is up — streams training progress into the page as it happens. The pendulum page links to it from the footer, and back again.
+`rl-visualizer.html` is the project's second page: a dashboard for the reinforcement-learning side of the same CartPole. It plays back recorded episodes of a trained PPO policy, runs that policy live against a JavaScript port of the environment (up to 1000 agents), and — when the backend is up — streams training progress into the page as it happens. The pendulum page links to it from a button beside the title, and back again.
 
 ### Serving it
+
+Double-click `run.cmd` to launch a server automatically (the FastAPI backend if `uv` is installed, otherwise `python -m http.server`) and open the browser at <http://localhost:8000/index.html>.
 
 Two ways, same files:
 
@@ -32,7 +34,7 @@ Two ways, same files:
   ```
   python -m http.server 8000
   ```
-  then <http://127.0.0.1:8000/rl-visualizer.html>. `data/*.json` are read as plain files — no backend, no live updates; replay starts playing as soon as the data loads. Opening the file directly (`file://`) does not work: browsers block `fetch` there, so the page shows a notice telling you to serve it over HTTP.
+  then <http://127.0.0.1:8000/rl-visualizer.html>. `data/*.json` are read as plain files — no backend, no live updates; replay starts playing as soon as the data loads. Opening the file directly (`file://`) does not work: browsers block `fetch` there.
 - **With the backend** — a FastAPI host that serves the visualizer at `/`, answers `/api/health`, and pushes a WebSocket stream of `rl:metrics` / `rl:policy` events whenever `data/training_metrics.json` or `data/policy.json` change on disk:
   ```
   cd backend
